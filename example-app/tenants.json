@@ -1,0 +1,24 @@
+{
+  "datasource": {
+    "type": "database",
+    "name": "mydb",
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "password"
+  },
+  "tenants": [
+    {
+      "id": "my-tenant",
+      "name": "My Company",
+      "subdomain": "my-tenant",
+      "hostnames": ["localhost:8000"],
+      "plugins": ["sqlite", "blog", "analytics"],
+      "config": {
+        "database": {
+          "type": "sqlite"
+        }
+      }
+    }
+  ]
+}

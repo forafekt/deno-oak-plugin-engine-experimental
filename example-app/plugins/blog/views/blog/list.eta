@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog - <%= it.tenant?.name %></title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    header {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      margin-bottom: 2rem;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 1.1rem;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .back-link:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .posts {
+      display: grid;
+      gap: 1.5rem;
+    }
+    
+    .post-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    
+    .post-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .post-card h2 {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    
+    .post-card h2 a {
+      color: inherit;
+      text-decoration: none;
+    }
+    
+    .post-card h2 a:hover {
+      color: #667eea;
+    }
+    
+    .post-meta {
+      color: #999;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .post-excerpt {
+      color: #666;
+      line-height: 1.7;
+    }
+    
+    .empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .empty h3 {
+      font-size: 1.5rem;
+      color: #667eea;
+      margin-bottom: 1rem;
+    }
+    
+    .empty p {
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn:hover {
+      opacity: 0.9;
+    }
+    
+    .create-form {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      margin-bottom: 2rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 5px;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    
+    .form-group textarea {
+      min-height: 200px;
+      font-family: monospace;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+    
+    <header>
+      <h1>Blog</h1>
+      <p class="subtitle"><%= it.tenant.name %></p>
+    </header>
+    
+    <div class="create-form">
+      <h3>Create New Post</h3>
+      <form id="create-post-form">
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" name="title" required>
+        </div>
+        <div class="form-group">
+          <label>Author (optional)</label>
+          <input type="text" name="author">
+        </div>
+        <div class="form-group">
+          <label>Content (Markdown)</label>
+          <textarea name="markdown" required placeholder="# Your Title
+
+Write your post here using **markdown** syntax..."></textarea>
+        </div>
+        <button type="submit" class="btn">Create Post</button>
+      </form>
+    </div>
+    
+    <% if (it.posts && it.posts.length > 0) { %>
+      <div class="posts">
+        <% it.posts.forEach((post) => { %>
+          <article class="post-card" onclick="location.href='/blog/<%= post.slug %>'">
+            <h2><a href="/blog/<%= post.slug %>"><%= post.title %></a></h2>
+            <div class="post-meta">
+              <span>By <%= post.author || 'Anonymous' %></span>
+              <span>•</span>
+              <span><%= new Date(post.created_at).toLocaleDateString() %></span>
+            </div>
+            <div class="post-excerpt">
+              <%= (post.markdown || post.html).substring(0, 200).replace(/<[^>]*>/g, '') %>...
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="empty">
+        <h3>No posts yet</h3>
+        <p>Create your first blog post to get started!</p>
+      </div>
+    <% } %>
+  </div>
+  
+  <script>
+    document.getElementById('create-post-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const data = {
+        title: formData.get('title'),
+        author: formData.get('author') || 'Anonymous',
+        markdown: formData.get('markdown'),
+      };
+      
+      try {
+        const response = await fetch('/api/blog/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        
+        if (response.ok) {
+          alert('Post created successfully!');
+          location.reload();
+        } else {
+          const error = await response.json();
+          alert('Error: ' + (error.message || error.error));
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+  </script>
+</body>
+</html>

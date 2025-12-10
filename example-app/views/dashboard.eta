@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= it.title %></title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+    
+    header {
+      background: white;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    h1 {
+      font-size: 1.5rem;
+      color: #667eea;
+    }
+    
+    .tenant-badge {
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+    
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .stat:last-child {
+      border-bottom: none;
+    }
+    
+    .stat-label {
+      color: #666;
+    }
+    
+    .stat-value {
+      font-weight: 600;
+      color: #667eea;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      transition: transform 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .config {
+      background: #f7f7f7;
+      padding: 1rem;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>Cortex Dashboard</h1>
+      <div class="tenant-badge"><%= it.tenant.name %></div>
+    </div>
+  </header>
+  
+  <div class="container">
+    <div class="grid">
+      <div class="card">
+        <h2>Tenant Information</h2>
+        <div class="stat">
+          <span class="stat-label">ID</span>
+          <span class="stat-value"><%= it.tenant.id %></span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Name</span>
+          <span class="stat-value"><%= it.tenant.name %></span>
+        </div>
+        <% if (it.tenant.domain) { %>
+        <div class="stat">
+          <span class="stat-label">Domain</span>
+          <span class="stat-value"><%= it.tenant.domain %></span>
+        </div>
+        <% } %>
+        <% if (it.tenant.subdomain) { %>
+        <div class="stat">
+          <span class="stat-label">Subdomain</span>
+          <span class="stat-value"><%= it.tenant.subdomain %></span>
+        </div>
+        <% } %>
+      </div>
+      
+      <div class="card">
+        <h2>Enabled Plugins</h2>
+        <% it.tenant.plugins.forEach((plugin) => { %>
+        <div class="stat">
+          <span class="stat-label"><%= plugin %></span>
+          <span class="stat-value">✓ Active</span>
+        </div>
+        <% }) %>
+      </div>
+      
+      <div class="card">
+        <h2>Database Configuration</h2>
+        <% if (it.tenant.config.database) { %>
+        <div class="stat">
+          <span class="stat-label">Type</span>
+          <span class="stat-value"><%= it.tenant.config.database.type %></span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Status</span>
+          <span class="stat-value">Connected</span>
+        </div>
+        <% } else { %>
+        <div class="stat">
+          <span class="stat-label">Status</span>
+          <span class="stat-value">Not Configured</span>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>Quick Actions</h2>
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+        <a href="/blog" class="btn">View Blog</a>
+        <a href="/api/analytics/stats" class="btn">Analytics</a>
+        <button class="btn" onclick="testWorker()">Test Worker</button>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>Configuration</h2>
+      <pre class="config"><%= JSON.stringify(it.tenant.config, null, 2) %></pre>
+    </div>
+  </div>
+  
+  <script>
+    async function testWorker() {
+      try {
+        const response = await fetch('/api/dispatch/blog/process-markdown', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            markdown: '# Test\n\nThis is a **test** markdown.'
+          })
+        });
+        
+        const result = await response.json();
+        alert('Worker dispatched! Job ID: ' + result.jobId);
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
