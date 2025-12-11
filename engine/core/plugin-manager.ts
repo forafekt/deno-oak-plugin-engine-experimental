@@ -4,8 +4,42 @@
  * Handles plugin registration, initialization, and lifecycle
  */
 
-import { Container, Logger, Plugin, PluginConfig } from "./types.ts";
+// import { Container, Logger, Plugin, PluginConfig } from "./types.ts";
+import { Middleware } from "https://deno.land/x/oak@v12.6.1/middleware.ts";
+import { Logger } from "../modules/logger.ts";
 import { fileExists } from "../modules/utils.ts";
+import { Container } from "./container.ts";
+import { RouteDefinition } from "./router.ts";
+import { WorkerDefinition } from "./worker-manager.ts";
+
+/**
+ * Plugin interface - all plugins must implement this
+ */
+export interface Plugin {
+  name: string;
+  version: string;
+  description?: string;
+  dependencies?: string[];
+  
+  // Lifecycle hooks
+  init?(container: Container, config: PluginConfig): Promise<void>;
+  boot?(container: Container): Promise<void>;
+  shutdown?(container: Container): Promise<void>;
+  
+  // Optional features
+  routes?: RouteDefinition[];
+  workers?: WorkerDefinition[];
+  middleware?: Middleware[];
+  viewPaths?: string[];
+  assetPaths?: string[];
+}
+
+/**
+ * Plugin configuration
+ */
+export interface PluginConfig {
+  [key: string]: unknown;
+}
 
 interface LoadedPlugin {
   plugin: Plugin;

@@ -23,9 +23,9 @@ const corsMiddleware = async (ctx: any, next: any) => {
 const engine = await bootstrap({
   config: "cfg.ts",
   plugins: [
-    // MySQLPlugin,
+    MySQLPlugin,
     SQLitePlugin,
-    // DenoKVPlugin,
+    DenoKVPlugin,
     BlogPlugin,
     AnalyticsPlugin,
   ],
@@ -99,7 +99,7 @@ router.register({
   path: "/dashboard",
   tenant: true,
   handler: async (ctx, container) => {
-    const tenant = ctx.state.tenant;
+    const tenant = await container.resolve<TenantManager>("tenantManager").resolve(ctx);
     const views = container.resolve<ViewEngine>("views");
     
     const html = await views.render("dashboard", {
@@ -197,6 +197,5 @@ container.resolve<TenantManager>("tenantManager").listTenants().forEach((t) => {
 });
 console.log("\n   Press Ctrl+C to stop\n");
 
-await engine.listen();
-
+engine.listen();
 })()

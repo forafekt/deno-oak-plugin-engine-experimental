@@ -12,8 +12,8 @@
       "id": "my-tenant",
       "name": "My Company",
       "subdomain": "my-tenant",
-      "hostnames": ["localhost:8000"],
       "plugins": ["sqlite", "blog", "analytics"],
+      "enabled": true,
       "config": {
         "database": {
           "type": "sqlite"

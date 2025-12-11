@@ -4,7 +4,8 @@
  * Can be used as both database and cache
  */
 
-import { CacheDriver, DatabaseDriver, Logger } from "../../core/types.ts";
+import { CacheDriver, DatabaseDriver } from "../../core/types.ts";
+import { Logger } from "../../modules/logger.ts";
 
 export class DenoKVDriver implements DatabaseDriver, CacheDriver {
   private kv: Deno.Kv | null = null;

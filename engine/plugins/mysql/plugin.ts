@@ -4,7 +4,12 @@
  * Provides MySQL database connectivity for tenants
  */
 
-import { Container, Plugin, PluginConfig } from "../../core/types.ts";
+import { Container } from "../../core/container.ts";
+import { Plugin, PluginConfig } from "../../core/plugin-manager.ts";
+import { Tenant, TenantManager } from "../../core/tenant-manager.ts";
+import { DatabaseDriver } from "../../core/types.ts";
+import { EventEmitter } from "../../modules/events.ts";
+import { Logger } from "../../modules/logger.ts";
 import { MySQLDriver } from "./driver.ts";
 
 export const MySQLPlugin: Plugin = {
@@ -13,14 +18,14 @@ export const MySQLPlugin: Plugin = {
   description: "MySQL database driver",
 
   async init(container: Container, config: PluginConfig): Promise<void> {
-    const logger = container.resolve("logger");
-    const events = container.resolve("events");
+    const logger = container.resolve<Logger>("logger");
+    const events = container.resolve<EventEmitter>("events");
 
     logger.info("Initializing MySQL plugin");
 
     // Register factory for MySQL driver
     container.registerFactory("db.mysql", (c) => {
-      const tenant = c.has("tenant") ? c.resolve("tenant") : null;
+      const tenant = c.has("tenant") ? c.resolve<Tenant>("tenant") : null;
       
       if (!tenant) {
         throw new Error("MySQL driver requires tenant context");
@@ -59,16 +64,16 @@ export const MySQLPlugin: Plugin = {
   },
 
   async shutdown(container: Container): Promise<void> {
-    const logger = container.resolve("logger");
+    const logger = container.resolve<Logger>("logger");
     logger.info("Shutting down MySQL plugin");
     
     // Disconnect all tenant databases
-    const tenantManager = container.resolve("tenantManager");
+    const tenantManager = container.resolve<TenantManager>("tenantManager");
     for (const tenant of tenantManager.listTenants()) {
       if (tenant.config.database?.type === "mysql") {
         const tenantContainer = tenantManager.getContainer(tenant.id);
         if (tenantContainer && tenantContainer.has("db")) {
-          const driver = tenantContainer.resolve("db");
+          const driver = tenantContainer.resolve<DatabaseDriver>("db");
           await driver.disconnect();
         }
       }

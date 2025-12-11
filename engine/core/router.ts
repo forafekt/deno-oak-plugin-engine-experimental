@@ -6,16 +6,23 @@
 
 import {
   Router,
-  Context,
   Middleware,
 } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import {
-  Container,
-  Logger,
-  RouteDefinition,
-  Tenant,
-} from "./types.ts";
-import { TenantManager } from "./tenant-manager.ts";
+import { Tenant, TenantContext, TenantManager } from "./tenant-manager.ts";
+import { Container } from "./container.ts";
+import { Logger } from "../modules/logger.ts";
+
+
+/**
+ * Route definition for plugins
+ */
+export interface RouteDefinition {
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  path: string;
+  handler: (ctx: TenantContext, container: Container) => Promise<void> | void;
+  middleware?: Middleware[];
+  tenant?: boolean; // If true, route is tenant-scoped
+}
 
 export class CortexRouter {
   private router: Router;
@@ -41,7 +48,7 @@ export class CortexRouter {
   register(route: RouteDefinition): void {
     this.routes.push(route);
 
-    const handler = async (ctx: Context) => {
+    const handler = async (ctx: TenantContext) => {
       try {
         // Resolve tenant if route is tenant-scoped
         let container = this.globalContainer;
@@ -89,19 +96,19 @@ export class CortexRouter {
 
     switch (route.method) {
       case "GET":
-        this.router.get(route.path, ...middlewares, handler);
+        this.router.get(route.path, handler, ...middlewares);
         break;
       case "POST":
-        this.router.post(route.path, ...middlewares, handler);
+        this.router.post(route.path, handler, ...middlewares);
         break;
       case "PUT":
-        this.router.put(route.path, ...middlewares, handler);
+        this.router.put(route.path, handler, ...middlewares);
         break;
       case "DELETE":
-        this.router.delete(route.path, ...middlewares, handler);
+        this.router.delete(route.path, handler, ...middlewares);
         break;
       case "PATCH":
-        this.router.patch(route.path, ...middlewares, handler);
+        this.router.patch(route.path, handler, ...middlewares);
         break;
     }
 

@@ -6,29 +6,19 @@
 
 import {
   Application,
-  Context,
+  ListenOptions,
   Middleware,
 } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import {
-  BootstrapOptions,
-  Container,
-  CortexConfig,
-  Plugin,
-  PluginConfig,
-  Tenant,
-  TenantResolver,
-  ViewEngine,
-  WorkerPayload,
-} from "./types.ts";
-import { DIContainer } from "./container.ts";
-import { PluginManager } from "./plugin-manager.ts";
-import { TenantManager } from "./tenant-manager.ts";
-import { WorkerManager } from "./worker-manager.ts";
-import { EtaViewEngine } from "./view-engine.ts";
+import { Container, createContainer, DIContainer } from "./container.ts";
+import { Plugin, PluginConfig, PluginManager } from "./plugin-manager.ts";
+import { DefaultTenantResolver, Tenant, TenantManager, TenantResolver } from "./tenant-manager.ts";
+import { WorkerManager, WorkerPayload } from "./worker-manager.ts";
+import { EtaViewEngine, ViewEngine } from "./view-engine.ts";
 import { CortexRouter } from "./router.ts";
 import { ConfigLoader } from "./config.ts";
 import { createLogger, Logger } from "../modules/logger.ts";
 import { createEventEmitter } from "../modules/events.ts";
+import { BootstrapOptions, CortexConfig } from "./types.ts";
 
 export class CortexKernel {
   private app: Application;
@@ -43,23 +33,27 @@ export class CortexKernel {
   private middlewares: Middleware[] = [];
   private initialized = false;
   private booted = false;
+  private eventEmitter: any;
 
   constructor(config: CortexConfig) {
     this.config = config;
     this.app = new Application();
-    this.container = new DIContainer();
-    this.logger = createLogger(config.logger);
+    this.container = createContainer();
+    this.logger = createLogger(config.logger?.level, config.logger?.prefix, config.logger?.useColors);
     this.pluginManager = new PluginManager(this.logger);
     this.workerManager = new WorkerManager(this.logger);
     this.viewEngine = new EtaViewEngine(
       this.logger,
       config.viewPaths || []
     );
+    this.eventEmitter = createEventEmitter();
     
     // Initialize tenant manager
     this.tenantManager = new TenantManager(
       this.container,
       this.logger,
+      new DefaultTenantResolver(), // TODO: Custom resolver
+      this.eventEmitter // TODO: Custom event emitter
     );
 
     // Initialize router
@@ -79,12 +73,16 @@ export class CortexKernel {
   private registerCoreServices(): void {
     this.container.register("config", this.config);
     this.container.register("logger", this.logger);
-    this.container.register("events", createEventEmitter());
+    this.container.register("events", this.eventEmitter);
     this.container.register("plugins", this.pluginManager);
     this.container.register("tenantManager", this.tenantManager);
     this.container.register("workers", this.workerManager);
     this.container.register("views", this.viewEngine);
     this.container.register("router", this.router);
+  }
+
+  setContainer(container: Container): void {
+    this.container = container;
   }
 
   /**
@@ -286,7 +284,7 @@ export class CortexKernel {
   /**
    * Start the server
    */
-  async listen(): Promise<void> {
+  listen(options: ListenOptions = {}) {
     if (!this.booted) {
       throw new Error("Kernel must be booted before listening");
     }
@@ -298,7 +296,7 @@ export class CortexKernel {
     this.logger.info(`Plugins loaded: ${this.pluginManager.list().length}`);
     this.logger.info(`Tenants registered: ${this.tenantManager.listTenants().length}`);
 
-    await this.app.listen({ hostname, port });
+    return this.app.listen({ hostname, port, ...options });
   }
 
   /**
@@ -385,7 +383,7 @@ if (typeof cfg === 'string') {
   cfg = (await import(Deno.realPathSync(Deno.cwd() + '/' + cfg))).default as CortexConfig;;
 }
 
-const logger = createLogger(cfg.logger);
+const logger = createLogger(cfg.logger?.level, cfg.logger?.prefix, cfg.logger?.useColors);
   
 logger.info("Bootstrapping Cortex Engine...");
 
@@ -399,6 +397,7 @@ logger.info("Bootstrapping Cortex Engine...");
   if (options.container) {
     // Transfer services to custom container
     // (This is advanced usage)
+    // kernel.setContainer(options.container);
   }
 
   // Set custom tenant resolver

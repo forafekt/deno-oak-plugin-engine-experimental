@@ -4,7 +4,12 @@
  * Provides SQLite database connectivity for tenants
  */
 
-import { Container, Plugin, PluginConfig } from "../../core/types.ts";
+import { Container } from "../../core/container.ts";
+import { Plugin, PluginConfig } from "../../core/plugin-manager.ts";
+import { Tenant, TenantManager } from "../../core/tenant-manager.ts";
+import { DatabaseDriver } from "../../core/types.ts";
+import { EventEmitter } from "../../modules/events.ts";
+import { Logger } from "../../modules/logger.ts";
 import { SQLiteDriver } from "./driver.ts";
 
 export const SQLitePlugin: Plugin = {
@@ -13,15 +18,15 @@ export const SQLitePlugin: Plugin = {
   description: "SQLite database driver",
 
   async init(container: Container, config: PluginConfig): Promise<void> {
-    const logger = container.resolve("logger");
-    const events = container.resolve("events");
+    const logger = container.resolve<Logger>("logger");
+    const events = container.resolve<EventEmitter>("events");
 
     logger.info("Initializing SQLite plugin");
 
     // Register factory for SQLite driver
     container.registerFactory("db.sqlite", (c) => {
-      const tenant = c.has("tenant") ? c.resolve("tenant") : null;
-      
+      const tenant = c.has("tenantManager") ? c.resolve<TenantManager>("tenantManager").getTenant("my-tenant") : null;
+      console.log(tenant);
       if (!tenant) {
         throw new Error("SQLite driver requires tenant context");
       }
@@ -42,7 +47,7 @@ export const SQLitePlugin: Plugin = {
         logger.debug(`Setting up SQLite for tenant: ${tenant.id}`);
         
         try {
-          const driver = await tenantContainer.resolveAsync("db.sqlite");
+          const driver = await tenantContainer.resolveAsync("db.sqlite") as SQLiteDriver;
           await driver.connect();
           
           // Register as 'db' for easy access
@@ -59,16 +64,16 @@ export const SQLitePlugin: Plugin = {
   },
 
   async shutdown(container: Container): Promise<void> {
-    const logger = container.resolve("logger");
+    const logger = container.resolve<Logger>("logger");
     logger.info("Shutting down SQLite plugin");
     
     // Disconnect all tenant databases
-    const tenantManager = container.resolve("tenantManager");
+    const tenantManager = container.resolve<TenantManager>("tenantManager");
     for (const tenant of tenantManager.listTenants()) {
       if (tenant.config.database?.type === "sqlite") {
         const tenantContainer = tenantManager.getContainer(tenant.id);
         if (tenantContainer && tenantContainer.has("db")) {
-          const driver = tenantContainer.resolve("db");
+          const driver = tenantContainer.resolve<DatabaseDriver>("db");
           await driver.disconnect();
         }
       }

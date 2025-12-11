@@ -1,163 +1,260 @@
+// modules/logger.ts
+/**
+ * Logger module
+ * Provides structured logging with levels and metadata
+ */
+
+export type LogLevel = "debug" | "info" | "warn" | "error";
+
 export interface LoggerOptions {
-  level?: "debug" | "info" | "warn" | "error";
-  format?: "json" | "text";
-  timestamp?: boolean;
-  colors?: boolean;
+  level?: LogLevel;
   prefix?: string;
+  useColors?: boolean;
 }
 
-export interface LogEntry {
-  level: string;
-  message: string;
-  timestamp: Date;
-  data?: any;
-  prefix?: string;
+export interface Logger {
+  debug(message: string, meta?: Record<string, unknown>): void;
+  info(message: string, meta?: Record<string, unknown>): void;
+  warn(message: string, meta?: Record<string, unknown>): void;
+  error(message: string, meta?: Record<string, unknown>): void;
+  setLevel(level: LogLevel): void;
+  setPrefix(prefix: string): void;
 }
 
-export class Logger {
-  private level: string;
-  private format: string;
-  private timestamp: boolean;
-  private colors: boolean;
-  private prefix?: string;
+const LOG_COLORS = {
+  debug: "\x1b[36m", // Cyan
+  info: "\x1b[32m",  // Green
+  warn: "\x1b[33m",  // Yellow
+  error: "\x1b[31m", // Red
+  reset: "\x1b[0m",
+  bold: "\x1b[1m",
+  dim: "\x1b[2m",
+};
 
-  constructor(options: LoggerOptions = {}) {
-    this.level = options.level || "info";
-    this.format = options.format || "text";
-    this.timestamp = options.timestamp ?? true;
-    this.colors = options.colors ?? (Deno.env.get("NODE_ENV") !== "production");
-    this.prefix = options.prefix;
+const LOG_LEVELS: Record<LogLevel, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+};
+
+export class ConsoleLogger implements Logger {
+  private level: LogLevel;
+  private prefix: string;
+  private useColors: boolean;
+
+  constructor(
+    level: LogLevel = "info",
+    prefix: string = "[Cortex]",
+    useColors: boolean = true
+  ) {
+    this.level = level;
+    this.prefix = prefix;
+    this.useColors = useColors && typeof process !== "undefined" && process.stdout?.isTTY;
   }
 
-  debug(message: string, data?: any): void {
-    if (this.shouldLog("debug")) {
-      this.log("debug", message, data);
-    }
+  private shouldLog(level: LogLevel): boolean {
+    return LOG_LEVELS[level] >= LOG_LEVELS[this.level];
   }
 
-  info(message: string, data?: any): void {
-    if (this.shouldLog("info")) {
-      this.log("info", message, data);
-    }
-  }
-
-  warn(message: string, data?: any): void {
-    if (this.shouldLog("warn")) {
-      this.log("warn", message, data);
-    }
-  }
-
-  error(message: string, data?: any): void {
-    if (this.shouldLog("error")) {
-      this.log("error", message, data);
-    }
-  }
-
-  private shouldLog(level: string): boolean {
-    const levels = ["debug", "info", "warn", "error"];
-    return levels.indexOf(level) >= levels.indexOf(this.level);
-  }
-
-  private log(level: string, message: string, data?: any): void {
-    const entry: LogEntry = {
-      level,
-      message,
-      timestamp: new Date(),
-      data,
-      prefix: this.prefix,
-    };
-
-    const output = this.format === "json"
-      ? JSON.stringify(entry)
-      : this.formatText(entry);
-
-    const consoleMethod = level === "error" ? "error"
-      : level === "warn" ? "warn"
-      : level === "info" ? "info"
-      : "debug";
-
-    console[consoleMethod](output);
-  }
-
-  private formatText(entry: LogEntry): string {
+  private formatMessage(
+    level: LogLevel,
+    message: string,
+    meta?: Record<string, unknown>
+  ): string {
+    const timestamp = new Date().toISOString();
+    const levelUpper = level.toUpperCase().padEnd(5);
+    
     let output = "";
 
-    if (this.timestamp) {
-      const timestamp = entry.timestamp.toISOString();
-      output += this.colors ? `\x1b[90m${timestamp}\x1b[0m ` : `${timestamp} `;
-    }
-
-    if (this.prefix) {
-      output += this.colors ? `\x1b[35m[${this.prefix}]\x1b[0m ` : `[${this.prefix}] `;
-    }
-
-    const levelColor = this.getLevelColor(entry.level);
-    const levelText = entry.level.toUpperCase().padEnd(5);
-    
-    if (this.colors && levelColor) {
-      output += `${levelColor}${levelText}\x1b[0m `;
+    if (this.useColors) {
+      const color = LOG_COLORS[level];
+      const reset = LOG_COLORS.reset;
+      const dim = LOG_COLORS.dim;
+      
+      output = `${dim}${timestamp}${reset} ${color}[${levelUpper}]${reset} ${this.prefix} ${message}`;
     } else {
-      output += `${levelText} `;
+      output = `${timestamp} [${levelUpper}] ${this.prefix} ${message}`;
     }
-
-    output += entry.message;
-
-    if (entry.data) {
-      output += " " + (typeof entry.data === "object"
-        ? JSON.stringify(entry.data, null, this.format === "json" ? 2 : 0)
-        : String(entry.data));
+    
+    if (meta && Object.keys(meta).length > 0) {
+      const metaStr = JSON.stringify(meta, this.safeJsonReplacer(), 2);
+      const indent = "  ";
+      output += `\n${indent}${metaStr.split("\n").join("\n" + indent)}`;
     }
-
+    
     return output;
   }
 
-  private getLevelColor(level: string): string {
-    switch (level) {
-      case "debug": return "\x1b[36m"; // Cyan
-      case "info": return "\x1b[32m"; // Green
-      case "warn": return "\x1b[33m"; // Yellow
-      case "error": return "\x1b[31m"; // Red
-      default: return "\x1b[0m"; // Reset
+  private safeJsonReplacer(): (key: string, value: unknown) => unknown {
+    const seen = new WeakSet();
+    return (key: string, value: unknown) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) {
+          return "[Circular]";
+        }
+        seen.add(value);
+      }
+      
+      // Handle special types
+      if (value instanceof Error) {
+        return {
+          name: value.name,
+          message: value.message,
+          stack: value.stack,
+        };
+      }
+      
+      if (typeof value === "function") {
+        return "[Function]";
+      }
+      
+      if (typeof value === "bigint") {
+        return value.toString() + "n";
+      }
+      
+      return value;
+    };
+  }
+
+  debug(message: string, meta?: Record<string, unknown>): void {
+    if (this.shouldLog("debug")) {
+      console.log(this.formatMessage("debug", message, meta));
     }
   }
 
-  child(context: Record<string, any>): Logger {
-    const child = new Logger({
-      level: this.level as any,
-      format: this.format as any,
-      timestamp: this.timestamp,
-      colors: this.colors,
-      prefix: this.prefix,
-    });
-
-    const originalLog = child["log"].bind(child);
-    child["log"] = (level: string, message: string, data?: any) => {
-      originalLog(level, message, { ...context, ...data });
-    };
-
-    return child;
+  info(message: string, meta?: Record<string, unknown>): void {
+    if (this.shouldLog("info")) {
+      console.log(this.formatMessage("info", message, meta));
+    }
   }
 
-  setLevel(level: "debug" | "info" | "warn" | "error"): void {
+  warn(message: string, meta?: Record<string, unknown>): void {
+    if (this.shouldLog("warn")) {
+      console.warn(this.formatMessage("warn", message, meta));
+    }
+  }
+
+  error(message: string, meta?: Record<string, unknown>): void {
+    if (this.shouldLog("error")) {
+      console.error(this.formatMessage("error", message, meta));
+    }
+  }
+
+  setLevel(level: LogLevel): void {
     this.level = level;
   }
 
-  setFormat(format: "json" | "text"): void {
-    this.format = format;
+  setPrefix(prefix: string): void {
+    this.prefix = prefix;
+  }
+
+  getLevel(): LogLevel {
+    return this.level;
+  }
+
+  getPrefix(): string {
+    return this.prefix;
   }
 }
 
-
-export const logger = new Logger({ colors: true, format: "text", level: "debug", prefix: "[Kernel]", timestamp: true });
-
-
-
-export function createLogger(options?: LoggerOptions) {
-  return new Logger(options);
+/**
+ * Null logger that does nothing (useful for testing)
+ */
+export class NullLogger implements Logger {
+  debug(): void {}
+  info(): void {}
+  warn(): void {}
+  error(): void {}
+  setLevel(): void {}
+  setPrefix(): void {}
 }
 
-export class ConsoleLogger extends Logger {
-  constructor() {
-    super();
+/**
+ * Logger that stores logs in memory (useful for testing)
+ */
+export class MemoryLogger implements Logger {
+  private logs: Array<{
+    level: LogLevel;
+    message: string;
+    meta?: Record<string, unknown>;
+    timestamp: Date;
+  }> = [];
+
+  private level: LogLevel = "info";
+  private prefix: string = "[Test]";
+
+  debug(message: string, meta?: Record<string, unknown>): void {
+    this.log("debug", message, meta);
   }
+
+  info(message: string, meta?: Record<string, unknown>): void {
+    this.log("info", message, meta);
+  }
+
+  warn(message: string, meta?: Record<string, unknown>): void {
+    this.log("warn", message, meta);
+  }
+
+  error(message: string, meta?: Record<string, unknown>): void {
+    this.log("error", message, meta);
+  }
+
+  private log(level: LogLevel, message: string, meta?: Record<string, unknown>): void {
+    if (LOG_LEVELS[level] >= LOG_LEVELS[this.level]) {
+      this.logs.push({
+        level,
+        message,
+        meta,
+        timestamp: new Date(),
+      });
+    }
+  }
+
+  setLevel(level: LogLevel): void {
+    this.level = level;
+  }
+
+  setPrefix(prefix: string): void {
+    this.prefix = prefix;
+  }
+
+  getLogs(): typeof this.logs {
+    return [...this.logs];
+  }
+
+  clear(): void {
+    this.logs = [];
+  }
+
+  getLogsByLevel(level: LogLevel): typeof this.logs {
+    return this.logs.filter(log => log.level === level);
+  }
+}
+
+/**
+ * Create a logger instance
+ */
+export function createLogger(
+  level: LogLevel = "info",
+  prefix = "[Cortex]",
+  useColors = true
+): Logger {
+  return new ConsoleLogger(level, prefix, useColors);
+}
+
+/**
+ * Create a logger from environment variables
+ */
+export function createLoggerFromEnv(prefix = "[Cortex]"): Logger {
+  const level = (
+    typeof process !== "undefined" 
+      ? process.env?.LOG_LEVEL 
+      : (globalThis as any).Deno?.env?.get?.("LOG_LEVEL")
+  ) as LogLevel | undefined;
+  
+  return createLogger(
+    level || "info",
+    prefix
+  );
 }

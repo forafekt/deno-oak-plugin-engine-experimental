@@ -5,13 +5,28 @@
  */
 
 import { Eta } from "https://deno.land/x/eta@v3.1.0/src/index.ts";
-import {
-  Logger,
-  Tenant,
-  ViewEngine,
-  ViewRenderOptions,
-} from "./types.ts";
 import { fileExists } from "../modules/utils.ts";
+import { Tenant } from "./tenant-manager.ts";
+import { Logger } from "../modules/logger.ts";
+
+/**
+ * View engine interface
+ */
+export interface ViewEngine {
+  render(
+    view: string,
+    data: Record<string, unknown>,
+    options?: ViewRenderOptions
+  ): Promise<string>;
+  addPath(path: string): void;
+  setTenant(tenant: Tenant | null): void;
+}
+
+export interface ViewRenderOptions {
+  layout?: string;
+  tenant?: Tenant;
+  plugin?: string;
+}
 
 export class EtaViewEngine implements ViewEngine {
   private eta: Eta;
@@ -95,7 +110,7 @@ export class EtaViewEngine implements ViewEngine {
     layout: string,
     content: string,
     data: Record<string, unknown>,
-    options: { tenant?: Tenant; plugin?: string }
+    options: { tenant?: Tenant | null; plugin?: string }
   ): Promise<string> {
     const layoutPath = await this.resolveView(`layouts/${layout}`, options);
 
@@ -123,7 +138,7 @@ export class EtaViewEngine implements ViewEngine {
    */
   private async resolveView(
     view: string,
-    options: { tenant?: Tenant; plugin?: string }
+    options: { tenant?: Tenant | null; plugin?: string }
   ): Promise<string | null> {
     const viewFile = view.endsWith(".eta") ? view : `${view}.eta`;
     const searchPaths: string[] = [];

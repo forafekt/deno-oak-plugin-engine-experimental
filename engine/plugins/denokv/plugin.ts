@@ -4,7 +4,12 @@
  * Provides Deno KV for database and cache functionality
  */
 
-import { Container, Plugin, PluginConfig } from "../../core/types.ts";
+import { Container } from "../../core/container.ts";
+import { Plugin, PluginConfig } from "../../core/plugin-manager.ts";
+import { Tenant, TenantManager } from "../../core/tenant-manager.ts";
+import { CacheDriver, DatabaseDriver } from "../../core/types.ts";
+import { EventEmitter } from "../../modules/events.ts";
+import { Logger } from "../../modules/logger.ts";
 import { DenoKVDriver } from "./driver.ts";
 
 export const DenoKVPlugin: Plugin = {
@@ -13,14 +18,14 @@ export const DenoKVPlugin: Plugin = {
   description: "Deno KV database and cache driver",
 
   async init(container: Container, config: PluginConfig): Promise<void> {
-    const logger = container.resolve("logger");
-    const events = container.resolve("events");
+    const logger = container.resolve<Logger>("logger");
+    const events = container.resolve<EventEmitter>("events");
 
     logger.info("Initializing Deno KV plugin");
 
     // Register factory for Deno KV driver (database)
     container.registerFactory("db.denokv", (c) => {
-      const tenant = c.has("tenant") ? c.resolve("tenant") : null;
+      const tenant = c.has("tenant") ? c.resolve<Tenant>("tenant") : null;
       
       if (!tenant) {
         throw new Error("DenoKV driver requires tenant context");
@@ -40,7 +45,7 @@ export const DenoKVPlugin: Plugin = {
 
     // Register factory for Deno KV cache
     container.registerFactory("cache.denokv", (c) => {
-      const tenant = c.has("tenant") ? c.resolve("tenant") : null;
+      const tenant = c.has("tenant") ? c.resolve<Tenant>("tenant") : null;
       
       if (!tenant) {
         throw new Error("DenoKV cache requires tenant context");
@@ -97,23 +102,23 @@ export const DenoKVPlugin: Plugin = {
   },
 
   async shutdown(container: Container): Promise<void> {
-    const logger = container.resolve("logger");
+    const logger = container.resolve<Logger>("logger");
     logger.info("Shutting down Deno KV plugin");
     
     // Disconnect all tenant KV instances
-    const tenantManager = container.resolve("tenantManager");
+    const tenantManager = container.resolve<TenantManager>("tenantManager");
     for (const tenant of tenantManager.listTenants()) {
       const tenantContainer = tenantManager.getContainer(tenant.id);
       if (!tenantContainer) continue;
 
       if (tenant.config.database?.type === "denokv" && tenantContainer.has("db")) {
-        const driver = tenantContainer.resolve("db");
+        const driver = tenantContainer.resolve<DatabaseDriver>("db");
         await driver.disconnect();
       }
 
       if (tenant.config.cache?.type === "denokv" && tenantContainer.has("cache")) {
-        const cache = tenantContainer.resolve("cache");
-        await cache.disconnect();
+        const cache = tenantContainer.resolve<CacheDriver>("cache");
+        await cache.clear();
       }
     }
   },

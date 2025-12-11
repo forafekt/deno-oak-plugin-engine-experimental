@@ -7,7 +7,6 @@
     "build:css": "deno run --allow-all ../engine/runtime/sass.ts . ./.out"
   },
   "compilerOptions": {
-    "allowJs": true,
     "lib": ["deno.window"],
     "strict": true
   },

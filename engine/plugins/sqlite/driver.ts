@@ -4,7 +4,8 @@
  */
 
 import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
-import { DatabaseDriver, Logger } from "../../core/types.ts";
+import { DatabaseDriver } from "../../core/types.ts";
+import { Logger } from "../../modules/logger.ts";
 
 export class SQLiteDriver implements DatabaseDriver {
   private db: DB | null = null;
@@ -44,14 +45,14 @@ export class SQLiteDriver implements DatabaseDriver {
     }
   }
 
-  async query<T>(sql: string, params?: unknown[]): Promise<T[]> {
+  async query<T>(sql: string, params?: any[]): Promise<T[]> {
     if (!this.connected || !this.db) {
       throw new Error("Database not connected");
     }
 
     try {
-      const rows = this.db.queryEntries<T>(sql, params);
-      return rows;
+      const rows = this.db.queryEntries(sql, params);
+      return rows as T[];
     } catch (error) {
       this.logger.error("SQLite query failed", {
         sql,

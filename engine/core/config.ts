@@ -4,8 +4,9 @@
  * Loads and merges configuration from various sources
  */
 
-import { CortexConfig, Tenant } from "./types.ts";
+import { CortexConfig } from "./types.ts";
 import { deepMerge, fileExists, loadJSON } from "../modules/utils.ts";
+import { Tenant } from "./tenant-manager.ts";
 
 const DEFAULT_CONFIG: CortexConfig = {
   port: 8000,
@@ -58,7 +59,7 @@ export class ConfigLoader {
     }
 
     if (Deno.env.get("LOG_LEVEL")) {
-        config.logger = { ...config.logger, level: Deno.env.get("LOG_LEVEL") };
+        config.logger = { ...config.logger, level: Deno.env.get("LOG_LEVEL") || 'info' };
     }
 
     return config;
