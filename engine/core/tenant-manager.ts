@@ -1,13 +1,11 @@
 // core/tenant-manager.ts
 /**
- * Tenant Manager
- * Manages multi-tenant routing, resolution, and container scoping
+ * Tenant Manager - FIXED VERSION
+ * Enhanced with better logging and debugging for tenant resolution
  */
 
 import type { Container } from "./container.ts";
 import type { Logger } from "../modules/logger.ts";
-import { Context as OakContext, State as OakState } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { EventEmitter } from "../modules/events.ts";
 
 export interface Tenant {
   id: string;
@@ -54,10 +52,14 @@ export interface TenantLimits {
   maxWorkers?: number;
 }
 
-export interface TenantContext<S extends AS = OakState, AS extends OakState = Record<string, any>> extends OakContext<S, AS> {
+export interface TenantContext {
+  hostname?: string;
+  path?: string;
+  tenantId?: string;
+  headers?: Record<string, string>;
   tenant?: Tenant;
   container?: Container;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface TenantResolver {
@@ -68,67 +70,136 @@ export class DefaultTenantResolver implements TenantResolver {
   private tenants = new Map<string, Tenant>();
   private domainMap = new Map<string, string>(); // domain -> tenant id
   private subdomainMap = new Map<string, string>(); // subdomain -> tenant id
+  private logger?: Logger;
+
+  setLogger(logger: Logger): void {
+    this.logger = logger;
+  }
 
   registerTenant(tenant: Tenant): void {
     this.tenants.set(tenant.id, tenant);
     
     if (tenant.domain) {
-      this.domainMap.set(tenant.domain.toLowerCase(), tenant.id);
+      const normalizedDomain = tenant.domain.toLowerCase();
+      this.domainMap.set(normalizedDomain, tenant.id);
+      this.logger?.debug(`Registered domain mapping: ${normalizedDomain} -> ${tenant.id}`);
     }
     
     if (tenant.subdomain) {
-      this.subdomainMap.set(tenant.subdomain.toLowerCase(), tenant.id);
+      const normalizedSubdomain = tenant.subdomain.toLowerCase();
+      this.subdomainMap.set(normalizedSubdomain, tenant.id);
+      this.logger?.debug(`Registered subdomain mapping: ${normalizedSubdomain} -> ${tenant.id}`);
     }
   }
 
-  async resolve(ctx: TenantContext): Promise<Tenant | null> {
+  async resolve(context: TenantContext): Promise<Tenant | null> {
+    this.logger?.debug("Attempting to resolve tenant", {
+      hostname: context.hostname,
+      path: context.path,
+      tenantId: context.tenantId,
+      hasHeaders: !!context.headers,
+    });
+
     // Try to resolve from context first (pre-resolved tenant)
-    if (ctx.tenant) {
-      return ctx.tenant;
+    if (context.tenant) {
+      this.logger?.debug("Tenant already in context", { id: context.tenant.id });
+      return context.tenant;
     }
 
-    // Try tenant ID in context
-    const tenantId = ctx.tenantId as string | undefined;
-    if (tenantId && this.tenants.has(tenantId)) {
-      return this.tenants.get(tenantId)!;
+    // Try tenant ID in context (from URL params)
+    if (context.tenantId) {
+      const tenant = this.tenants.get(context.tenantId);
+      if (tenant) {
+        this.logger?.debug("Resolved tenant by ID from context", { 
+          id: tenant.id, 
+          name: tenant.name 
+        });
+        return tenant;
+      }
     }
 
     // Try hostname resolution
-    const hostname = ctx.hostname as string | undefined;
-    if (hostname) {
-      const normalizedHost = hostname.toLowerCase();
+    if (context.hostname) {
+      const normalizedHost = context.hostname.toLowerCase();
+      
+      this.logger?.debug("Checking hostname", { 
+        hostname: normalizedHost,
+        domainMappings: Array.from(this.domainMap.keys()),
+        subdomainMappings: Array.from(this.subdomainMap.keys()),
+      });
       
       // Exact domain match
       if (this.domainMap.has(normalizedHost)) {
         const id = this.domainMap.get(normalizedHost)!;
-        return this.tenants.get(id)!;
+        const tenant = this.tenants.get(id)!;
+        this.logger?.debug("Resolved tenant by exact domain", { 
+          domain: normalizedHost,
+          id: tenant.id, 
+          name: tenant.name 
+        });
+        return tenant;
       }
       
-      // Subdomain match
+      // Subdomain match (extract first part)
       const subdomain = normalizedHost.split(".")[0];
       if (this.subdomainMap.has(subdomain)) {
         const id = this.subdomainMap.get(subdomain)!;
-        return this.tenants.get(id)!;
+        const tenant = this.tenants.get(id)!;
+        this.logger?.debug("Resolved tenant by subdomain", { 
+          subdomain,
+          id: tenant.id, 
+          name: tenant.name 
+        });
+        return tenant;
       }
     }
 
     // Try header-based resolution
-    const tenantHeader = ctx.headers?.["x-tenant-id"] as string | undefined;
-    if (tenantHeader && this.tenants.has(tenantHeader)) {
-      return this.tenants.get(tenantHeader)!;
+    if (context.headers) {
+      const tenantHeader = context.headers["x-tenant-id"] || 
+                          context.headers["X-Tenant-Id"];
+      
+      if (tenantHeader && this.tenants.has(tenantHeader)) {
+        const tenant = this.tenants.get(tenantHeader)!;
+        this.logger?.debug("Resolved tenant by header", { 
+          id: tenant.id, 
+          name: tenant.name 
+        });
+        return tenant;
+      }
     }
 
     // Try path-based resolution (/tenant/{id}/...)
-    const path = ctx.path as string | undefined;
-    if (path) {
-      const match = path.match(/^\/tenant\/([^\/]+)/);
+    if (context.path) {
+      const match = context.path.match(/^\/tenant\/([^\/]+)/);
       if (match) {
         const id = match[1];
         if (this.tenants.has(id)) {
-          return this.tenants.get(id)!;
+          const tenant = this.tenants.get(id)!;
+          this.logger?.debug("Resolved tenant by path", { 
+            path: context.path,
+            id: tenant.id, 
+            name: tenant.name 
+          });
+          return tenant;
+        } else {
+          this.logger?.warn("Tenant ID in path not found", { 
+            path: context.path,
+            tenantId: id,
+            availableTenants: Array.from(this.tenants.keys()),
+          });
         }
       }
     }
+
+    this.logger?.warn("Could not resolve tenant", {
+      hostname: context.hostname,
+      path: context.path,
+      tenantId: context.tenantId,
+      availableTenants: Array.from(this.tenants.keys()),
+      registeredDomains: Array.from(this.domainMap.keys()),
+      registeredSubdomains: Array.from(this.subdomainMap.keys()),
+    });
 
     return null;
   }
@@ -170,27 +241,26 @@ export class TenantManager {
   private containers = new Map<string, Container>();
   private logger: Logger;
   private globalContainer: Container;
-  private eventEmitter?: EventEmitter;
+  private eventEmitter?: any;
 
   constructor(
     globalContainer: Container,
     logger: Logger,
-    resolver?: TenantResolver,
-    eventEmitter?: EventEmitter,
+    resolver?: TenantResolver
   ) {
     this.globalContainer = globalContainer;
     this.logger = logger;
     this.resolver = resolver || new DefaultTenantResolver();
-    this.eventEmitter = eventEmitter;
+    
+    // Set logger on default resolver
+    if (this.resolver instanceof DefaultTenantResolver) {
+      this.resolver.setLogger(logger);
+    }
     
     // Try to get event emitter if available
     try {
       if (globalContainer.has("events")) {
         this.eventEmitter = globalContainer.resolve("events");
-      } else if (eventEmitter) {
-        this.eventEmitter = eventEmitter;
-      } else {
-        this.logger.warn("Event emitter not found");
       }
     } catch {
       // Events not available
@@ -201,7 +271,12 @@ export class TenantManager {
    * Register a tenant
    */
   registerTenant(tenant: Tenant): void {
-    this.logger.debug(`Registering tenant: ${tenant.id}`);
+    this.logger.debug(`Registering tenant: ${tenant.id}`, {
+      name: tenant.name,
+      domain: tenant.domain,
+      subdomain: tenant.subdomain,
+      plugins: tenant.plugins,
+    });
 
     // Validate tenant
     if (!tenant.id || !tenant.name) {
@@ -230,6 +305,7 @@ export class TenantManager {
    * Register multiple tenants
    */
   registerTenants(tenants: Tenant[]): void {
+    this.logger.info(`Registering ${tenants.length} tenants...`);
     for (const tenant of tenants) {
       this.registerTenant(tenant);
     }
@@ -242,15 +318,20 @@ export class TenantManager {
     try {
       const tenant = await this.resolver.resolve(context);
       
-      if (tenant && !tenant.enabled && tenant.enabled !== undefined) {
+      if (tenant && tenant.enabled === false) {
         this.logger.warn(`Tenant ${tenant.id} is disabled`);
         return null;
+      }
+
+      if (tenant) {
+        this.logger.debug(`Tenant resolved successfully: ${tenant.id}`);
       }
 
       return tenant;
     } catch (error) {
       this.logger.error("Error resolving tenant", {
         error: error instanceof Error ? error.message : String(error),
+        context,
       });
       return null;
     }
@@ -310,7 +391,6 @@ export class TenantManager {
 
     this.logger.info(`Tenant updated: ${id}`);
 
-    // Emit event
     if (this.eventEmitter) {
       this.eventEmitter.emit("tenant:updated", { tenant });
     }
@@ -325,17 +405,14 @@ export class TenantManager {
     const tenant = this.getTenant(id);
     if (!tenant) return false;
 
-    // Remove container
     this.containers.delete(id);
 
-    // Remove from resolver
     if (this.resolver instanceof DefaultTenantResolver) {
       this.resolver.removeTenant(id);
     }
 
     this.logger.info(`Tenant removed: ${id}`);
 
-    // Emit event
     if (this.eventEmitter) {
       this.eventEmitter.emit("tenant:removed", { tenant });
     }
@@ -360,7 +437,6 @@ export class TenantManager {
 
   /**
    * Initialize tenant services
-   * Called after plugins are booted
    */
   async initializeTenantServices(): Promise<void> {
     this.logger.info("Initializing tenant services...");
@@ -369,10 +445,9 @@ export class TenantManager {
       const tenant = this.getTenant(tenantId);
       if (!tenant) continue;
 
-      this.logger.warn(`Initializing services for tenant: ${tenantId}`);
+      this.logger.debug(`Initializing services for tenant: ${tenantId}`);
 
       try {
-        // Emit tenant initialization event
         if (this.eventEmitter) {
           await this.eventEmitter.emit("tenant:initialized", { 
             tenant, 
@@ -437,5 +512,33 @@ export class TenantManager {
     if (limit === undefined) return true;
 
     return currentValue < limit;
+  }
+
+  /**
+   * Print tenant information (debugging)
+   */
+  printTenants(): void {
+    const tenants = this.listTenants();
+    
+    console.log("\n🏢 Registered Tenants:");
+    console.log("═══════════════════════════════════════════════════════");
+    
+    if (tenants.length === 0) {
+      console.log("  No tenants registered");
+    } else {
+      for (const tenant of tenants) {
+        console.log(`\n  ${tenant.id} - ${tenant.name}`);
+        if (tenant.domain) {
+          console.log(`    Domain: ${tenant.domain}`);
+        }
+        if (tenant.subdomain) {
+          console.log(`    Subdomain: ${tenant.subdomain}`);
+        }
+        console.log(`    Plugins: ${tenant.plugins.join(", ")}`);
+        console.log(`    Enabled: ${tenant.enabled !== false ? "Yes" : "No"}`);
+      }
+    }
+    
+    console.log("\n═══════════════════════════════════════════════════════\n");
   }
 }

@@ -42,21 +42,12 @@ export const BlogPlugin: Plugin = {
     {
       method: "GET",
       path: "/blog",
-      tenant: true,
+      tenant: false,
+      name: "blog-list",
       handler: async (ctx, container) => {
-        const blog = container.resolve<BlogService>("blog");
-        const posts = await blog.listPosts();
-        const views = container.resolve<ViewEngine>("views");
-
-        const html = await views.render("blog/list", {
-          posts,
-          tenant: ctx.state.tenant,
-        }, {
-          plugin: "blog",
-        });
-
-        ctx.response.type = "text/html";
-        ctx.response.body = html;
+        console.log(ctx.state.session?.tenant);
+        // ctx.response.redirect('/tenant/tenant1/blog');
+        ctx.response.body = {}
       },
     },
     {
@@ -67,15 +58,15 @@ export const BlogPlugin: Plugin = {
         const blog = container.resolve<BlogService>("blog");
         const post = await blog.getPost(ctx.params.slug);
 
-        if (!post) {
-          ctx.response.status = 404;
-          ctx.response.body = { error: "Post not found" };
-          return;
-        }
+        // if (!post) {
+        //   ctx.response.status = 404;
+        //   ctx.response.body = { error: "Post not found" };
+        //   return;
+        // }
 
         const views = container.resolve<ViewEngine>("views");
         const html = await views.render("blog/post", {
-          post,
+          post: post || {},
           tenant: ctx.state.tenant,
         }, {
           plugin: "blog",
@@ -149,6 +140,27 @@ export const BlogPlugin: Plugin = {
         ctx.response.body = { success: true };
       },
     },
+    {
+      method: "GET",
+      path: "/tenant/:tenantId/blog",
+      tenant: true,
+      name: "tenant-blog-list",
+      handler: async (ctx, container) => {
+         const blog = container.resolve<BlogService>("blog");
+        const posts = await blog.listPosts();
+        const views = container.resolve<ViewEngine>("views");
+
+        const html = await views.render("blog/list", {
+          posts,
+          tenant: ctx.state.tenant,
+        }, {
+          plugin: "blog",
+        });
+
+        ctx.response.type = "text/html";
+        ctx.response.body = html;
+      },
+    },
   ],
 
   workers: [
@@ -172,7 +184,7 @@ export const BlogPlugin: Plugin = {
     },
   ],
 
-  viewPaths: ["./engine/plugins/blog/views"],
+  viewPaths: ["./views"],
 };
 
 /**

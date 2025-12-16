@@ -18,8 +18,8 @@ export class SassCompiler {
 
   constructor(options: CompileOptions = {}) {
     this.options = {
-      sourceDir: options.sourceDir || "./public/scss",
-      outDir: options.outDir || "./public/css",
+      sourceDir: options.sourceDir || "scss",
+      outDir: options.outDir || ".out/css",
       minify: options.minify !== false,
       watch: options.watch || false,
     };
@@ -85,8 +85,8 @@ export class SassCompiler {
     }
 
     for (const file of files) {
-      const relativePath = file.replace(this.options.sourceDir!, "");
-      const outputPath = `${this.options.outDir}${relativePath}`.replace(
+      const relativePath = file.replace(this.options.sourceDir!, "").split("/").pop()!;
+      const outputPath = `${this.options.outDir}/${relativePath}`.replace(
         /\.(scss|sass)$/,
         ".css"
       );
@@ -112,8 +112,8 @@ export class SassCompiler {
         for (const path of event.paths) {
           if (path.endsWith(".scss") || path.endsWith(".sass")) {
             if (!path.split("/").pop()!.startsWith("_")) {
-              const relativePath = path.replace(this.options.sourceDir!, "");
-              const outputPath = `${this.options.outDir}${relativePath}`.replace(
+              const relativePath = path.replace(this.options.sourceDir!, "").split("/").pop()!;
+              const outputPath = `${this.options.outDir}/${relativePath}`.replace(
                 /\.(scss|sass)$/,
                 ".css"
               );
@@ -130,8 +130,8 @@ export class SassCompiler {
 if (import.meta.main) {
   const args = Deno.args;
   const watch = args.includes("--watch");
-  const sourceDir = args[0] || "./public/scss";
-  const outDir = args[1] || "./public/css";
+  const sourceDir = args[0] || "scss";
+  const outDir = args[1] || ".out/css";
 
   const compiler = new SassCompiler({
     sourceDir,

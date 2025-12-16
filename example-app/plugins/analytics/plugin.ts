@@ -4,7 +4,7 @@
  * Provides event tracking and analytics
  */
 
-import { Plugin, Container, PluginConfig } from "../../../engine/mod.ts";
+import { Plugin, Container, PluginConfig, Logger, WorkerManager, CacheDriver, DatabaseDriver } from "../../../engine/mod.ts";
 
 export const AnalyticsPlugin: Plugin = {
   name: "analytics",
@@ -12,7 +12,7 @@ export const AnalyticsPlugin: Plugin = {
   description: "Analytics and event tracking",
 
   async init(container: Container, config: PluginConfig): Promise<void> {
-    const logger = container.resolve("logger");
+    const logger = container.resolve<Logger>("logger");
     logger.info("Initializing analytics plugin");
 
     // Register analytics service
@@ -27,11 +27,11 @@ export const AnalyticsPlugin: Plugin = {
       path: "/api/analytics/track",
       tenant: true,
       handler: async (ctx, container) => {
-        const analytics = await container.resolveAsync("analytics");
+        const analytics = await container.resolveAsync<AnalyticsService>("analytics");
         const body = await ctx.request.body({ type: "json" }).value;
 
         // Dispatch tracking worker
-        const workers = container.resolve("workers");
+        const workers = container.resolve<WorkerManager>("workers");
         const jobId = await workers.dispatch(
           "analytics",
           "track-event",
@@ -58,7 +58,7 @@ export const AnalyticsPlugin: Plugin = {
       path: "/api/analytics/stats",
       tenant: true,
       handler: async (ctx, container) => {
-        const analytics = await container.resolveAsync("analytics");
+        const analytics = await container.resolveAsync<AnalyticsService>("analytics");
         const stats = await analytics.getStats();
 
         ctx.response.body = stats;
@@ -69,7 +69,7 @@ export const AnalyticsPlugin: Plugin = {
       path: "/api/analytics/events",
       tenant: true,
       handler: async (ctx, container) => {
-        const analytics = await container.resolveAsync("analytics");
+        const analytics = await container.resolveAsync<AnalyticsService>("analytics");
         const limit = parseInt(ctx.request.url.searchParams.get("limit") || "100");
         const events = await analytics.getEvents(limit);
 
@@ -82,8 +82,8 @@ export const AnalyticsPlugin: Plugin = {
     {
       name: "track-event",
       handler: async (payload, container) => {
-        const logger = container.resolve("logger");
-        const analytics = await container.resolveAsync("analytics");
+        const logger = container.resolve<Logger>("logger");
+        const analytics = await container.resolveAsync<AnalyticsService>("analytics");
 
         logger.debug("Tracking analytics event", {
           tenantId: payload.tenantId,
@@ -101,8 +101,8 @@ export const AnalyticsPlugin: Plugin = {
     {
       name: "aggregate-stats",
       handler: async (payload, container) => {
-        const logger = container.resolve("logger");
-        const analytics = await container.resolveAsync("analytics");
+        const logger = container.resolve<Logger>("logger");
+        const analytics = await container.resolveAsync<AnalyticsService>("analytics");
 
         logger.debug("Aggregating analytics stats");
 
@@ -121,7 +121,7 @@ export const AnalyticsPlugin: Plugin = {
       // Auto-track page views
       if (ctx.state.tenant && ctx.request.method === "GET") {
         const container = ctx.state.container;
-        const workers = container.resolve("workers");
+        const workers = container.resolve("workers") as WorkerManager;
 
         await workers.dispatch(
           "analytics",
@@ -154,13 +154,13 @@ class AnalyticsService {
   async storeEvent(event: any): Promise<void> {
     // Try to use cache for recent events
     if (this.container.has("cache")) {
-      const cache = this.container.resolve("cache");
+      const cache = this.container.resolve<CacheDriver>("cache");
       const key = `event:${event.timestamp}:${Math.random()}`;
       await cache.set(key, event, 3600); // 1 hour TTL
     }
 
     // Store in database
-    const db = this.container.resolve("db");
+    const db = this.container.resolve<DatabaseDriver>("db");
 
     try {
       await db.execute(
@@ -177,7 +177,7 @@ class AnalyticsService {
   }
 
   async getEvents(limit = 100): Promise<any[]> {
-    const db = this.container.resolve("db");
+    const db = this.container.resolve<DatabaseDriver>("db");
 
     try {
       return await db.query(
@@ -212,14 +212,14 @@ class AnalyticsService {
   }
 
   async aggregateStats(): Promise<void> {
-    const logger = this.container.resolve("logger");
+    const logger = this.container.resolve<Logger>("logger");
     logger.debug("Aggregating analytics stats...");
 
     const stats = await this.getStats();
 
     // Store aggregated stats
     if (this.container.has("cache")) {
-      const cache = this.container.resolve("cache");
+      const cache = this.container.resolve<CacheDriver>("cache");
       await cache.set("analytics:stats", stats, 300); // 5 min cache
     }
   }

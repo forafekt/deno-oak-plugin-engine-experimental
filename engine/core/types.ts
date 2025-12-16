@@ -21,8 +21,8 @@ export interface CortexConfig {
   viewPaths?: string[];
   assetPaths?: string[];
   pluginPaths?: string[];
+  debug?: boolean;
 }
-
 
 // export interface DatabaseConfig {
 //   type: "mysql" | "sqlite" | "postgres" | "denokv";
@@ -33,9 +33,6 @@ export interface CortexConfig {
 //   type: "memory" | "redis" | "denokv";
 //   connection?: string | Record<string, unknown>;
 // }
-
-
-
 
 // /**
 //  * Event system
@@ -48,7 +45,6 @@ export interface CortexConfig {
 // }
 
 // export type EventHandler = (data?: unknown) => void | Promise<void>;
-
 
 /**
  * Database driver interface
@@ -76,7 +72,7 @@ export interface CacheDriver {
  * Bootstrap options for the engine
  */
 export interface BootstrapOptions {
-  config: CortexConfig | string;
+  config: CortexConfig;
   // configFilename?: string;
   plugins?: Plugin[];
   tenants?: Tenant[];
@@ -84,4 +80,78 @@ export interface BootstrapOptions {
   middleware?: Middleware[];
   tenantResolver?: TenantResolver;
   container?: Container;
+  env?: string | Record<string, any>;
+  deno?:
+    | Record<string, any>
+    | ((denoJson: Record<string, any>) => Record<string, any>);
 }
+
+export type DefineConfig<T extends Record<string, any>> = BootstrapOptions & T;
+
+// export function defineConfig<T extends Record<string, any>>(
+//   $: DefineConfig<T>
+// ) {
+
+//   try {
+//     const $denoJson = Deno.readTextFileSync("./deno.json");
+//     if (typeof $.deno !== "function") {
+//       $.deno = { ...JSON.parse($denoJson), ...$.deno };
+//     } else {
+//       $.deno = (denoJson: Record<string, any>) => ({
+//         ...JSON.parse($denoJson),
+//         ...denoJson,
+//       });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//   }
+
+//   try {
+//     if (typeof $.env === "string") {
+//       $.env = readEnvFile($.env);
+//     } else if (typeof $.env === "object") {
+//       $.env = { ...$.env };
+//     } else {
+//       $.env = {};
+//     }
+//   } catch (error) {
+//     console.error(error);
+//   }
+
+//   console.log($)
+
+//   return $;
+// }
+
+// env.ts
+// export function readEnvFile(
+//   path = ".env",
+// ) {
+//   const text = Deno.readTextFileSync(path);
+//   const env: Record<string, string> = {};
+
+//   for (const line of text.split("\n")) {
+//     const trimmed = line.trim();
+
+//     // Skip empty lines and comments
+//     if (!trimmed || trimmed.startsWith("#")) continue;
+
+//     const eqIndex = trimmed.indexOf("=");
+//     if (eqIndex === -1) continue;
+
+//     const key = trimmed.slice(0, eqIndex).trim();
+//     let value = trimmed.slice(eqIndex + 1).trim();
+
+//     // Remove surrounding quotes
+//     if (
+//       (value.startsWith('"') && value.endsWith('"')) ||
+//       (value.startsWith("'") && value.endsWith("'"))
+//     ) {
+//       value = value.slice(1, -1);
+//     }
+
+//     env[key] = value;
+//   }
+
+//   return env;
+// }

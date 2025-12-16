@@ -9,14 +9,15 @@
   },
   "tenants": [
     {
-      "id": "my-tenant",
-      "name": "My Company",
-      "subdomain": "my-tenant",
-      "plugins": ["sqlite", "blog", "analytics"],
+      "id": "tenant1",
+      "name": "Tenant One",
+      "subdomain": "tenant1",
+      "plugins": ["dashboard", "sqlite", "denokv", "blog", "analytics"],
       "enabled": true,
       "config": {
         "database": {
-          "type": "sqlite"
+          "type": "sqlite",
+          "connection": "./data/tenant1.db"
         }
       }
     }

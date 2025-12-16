@@ -189,7 +189,7 @@ export class PluginManager {
       if (loaded.plugin.shutdown) {
         try {
           await loaded.plugin.shutdown(container);
-        } catch (error) {
+        } catch (error: any) {
           this.logger.error(`Error shutting down plugin ${name}`, {
             error: error.message,
           });

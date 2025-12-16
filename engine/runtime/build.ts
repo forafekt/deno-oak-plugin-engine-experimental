@@ -20,8 +20,8 @@ export class AssetBuilder {
 
   constructor(options: BuildOptions = {}) {
     this.options = {
-      entryPoints: options.entryPoints || ["./public/js/app.js"],
-      outdir: options.outdir || "./public/dist",
+      entryPoints: options.entryPoints || [],
+      outdir: options.outdir || "./.out/js",
       minify: options.minify !== false,
       sourcemap: options.sourcemap !== false,
       watch: options.watch || false,
@@ -45,7 +45,7 @@ export class AssetBuilder {
         minify: this.options.minify,
         sourcemap: this.options.sourcemap,
         format: "esm",
-        target: "es2020",
+        target: "esnext",
         logLevel: "info",
       });
 
@@ -75,7 +75,7 @@ export class AssetBuilder {
       minify: this.options.minify,
       sourcemap: this.options.sourcemap,
       format: "esm",
-      target: "es2020",
+      target: "esnext",
     });
 
     await ctx.watch();
@@ -109,22 +109,66 @@ export class AssetBuilder {
 
     await builder.build();
   }
+
+  static async watchAll(
+    sourceDir: string,
+    outDir: string,
+    options: Partial<BuildOptions> = {}
+  ): Promise<void> {
+    const entryPoints: string[] = [];
+
+    for await (const file of walkDir(sourceDir, [".js", ".ts"])) {
+      entryPoints.push(file);
+    }
+
+    if (entryPoints.length === 0) {
+      console.log(`ℹ️  No ${[".js", ".ts"].join(', ')} files found in ${sourceDir}`);
+      return;
+    }
+
+    const builder = new AssetBuilder({
+      entryPoints,
+      outdir: outDir,
+      ...options,
+    });
+
+    await builder.watch();
+  }
 }
 
 // CLI usage
 if (import.meta.main) {
   const args = Deno.args;
   const watch = args.includes("--watch");
-  const sourceDir = args[0] || "./public/js";
-  const outDir = args[1] || "./public/dist";
+  const sourceDir = args[0] || "./";
+  const sourceDirPlugins = sourceDir + "/plugins";
+  const outDir = args[1] || "./.out/js";
+  const includePlugins = args.includes("--plugins");
+  const pluginOutDir = "./.out/js/plugins";
 
-  const builder = new AssetBuilder({
-    outdir: outDir,
-  });
+ 
+
+  // const builder = new AssetBuilder({
+  //   outdir: outDir,
+  //   watch: watch,
+  //   entryPoints: ['app/main.ts']
+  // });
+  // const builderPlugins = new AssetBuilder({
+  //   outdir: pluginOutDir,
+  //   watch: watch,
+  // });
 
   if (watch) {
-    await builder.watch();
+    await AssetBuilder.watchAll(sourceDir, outDir);
+    if (includePlugins) {
+      await AssetBuilder.buildAll("../engine/plugins", pluginOutDir);
+      await AssetBuilder.watchAll(sourceDirPlugins, pluginOutDir);
+    }
   } else {
     await AssetBuilder.buildAll(sourceDir, outDir);
+    if (includePlugins) {
+      await AssetBuilder.buildAll("../engine/plugins", pluginOutDir);
+      await AssetBuilder.watchAll(sourceDirPlugins, pluginOutDir);
+    }
   }
 }

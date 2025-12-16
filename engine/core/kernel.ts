@@ -17,8 +17,9 @@ import { EtaViewEngine, ViewEngine } from "./view-engine.ts";
 import { CortexRouter } from "./router.ts";
 import { ConfigLoader } from "./config.ts";
 import { createLogger, Logger } from "../modules/logger.ts";
-import { createEventEmitter } from "../modules/events.ts";
+import { createEventEmitter, EventEmitter } from "../modules/events.ts";
 import { BootstrapOptions, CortexConfig } from "./types.ts";
+import { bootstrapConfigParser } from "../modules/utils.ts";
 
 export class CortexKernel {
   private app: Application;
@@ -33,31 +34,28 @@ export class CortexKernel {
   private middlewares: Middleware[] = [];
   private initialized = false;
   private booted = false;
-  private eventEmitter: any;
+  private eventEmitter: EventEmitter;
 
   constructor(config: CortexConfig) {
     this.config = config;
     this.app = new Application();
     this.container = createContainer();
-    this.logger = createLogger(config.logger?.level, config.logger?.prefix, config.logger?.useColors);
+    this.logger = createLogger(config.logger);
     this.pluginManager = new PluginManager(this.logger);
     this.workerManager = new WorkerManager(this.logger);
-    this.viewEngine = new EtaViewEngine(
-      this.logger,
-      config.viewPaths || []
-    );
+    this.viewEngine = new EtaViewEngine(this.logger, config.viewPaths || []);
     this.eventEmitter = createEventEmitter();
     
     // Initialize tenant manager
     this.tenantManager = new TenantManager(
       this.container,
       this.logger,
-      new DefaultTenantResolver(), // TODO: Custom resolver
-      this.eventEmitter // TODO: Custom event emitter
+      new DefaultTenantResolver(),
     );
 
     // Initialize router
     this.router = new CortexRouter(
+      undefined, // TODO: Original Oak Router options
       this.container,
       this.tenantManager,
       this.logger
@@ -231,7 +229,7 @@ export class CortexKernel {
     this.app.use(async (ctx, next) => {
       try {
         await next();
-      } catch (error) {
+      } catch (error: any) {
         this.logger.error("Request error", {
           error: error.message,
           stack: error.stack,
@@ -363,69 +361,73 @@ export class CortexKernel {
   getConfig(): CortexConfig {
     return this.config;
   }
+
+  isDebug(): boolean {
+    return this.config.debug || false;
+  }
 }
 
 /**
  * Bootstrap the Cortex Engine
+ * 
+ * @param options - Configuration options or path to config file
+ * @default options = 'engine.config.ts'
+ * @returns {Promise<CortexKernel>}
  */
 export async function bootstrap(
-  options: BootstrapOptions
+  /**
+   * Configuration options or path to config file
+   * 
+   * @default 'engine.config.ts'
+   */
+  options: BootstrapOptions | string = 'engine.config.ts'
 ): Promise<CortexKernel> {
 
-let cfg = options.config;
+const cfg = await bootstrapConfigParser(options);
 
-if (typeof cfg === 'string') {
-  // throw error if filename startswith any special characters
-  if (cfg.match(/^\./)) {
-    throw new Error('Config filename must not start with ./ or ../');
-  }
-
-  cfg = (await import(Deno.realPathSync(Deno.cwd() + '/' + cfg))).default as CortexConfig;;
-}
-
-const logger = createLogger(cfg.logger?.level, cfg.logger?.prefix, cfg.logger?.useColors);
+const logger = createLogger(cfg.config?.logger);
   
 logger.info("Bootstrapping Cortex Engine...");
 
   // Validate configuration
-  ConfigLoader.validate(cfg);
+  ConfigLoader.validate(cfg.config);
 
   // Create kernel
-  const kernel = new CortexKernel(cfg);
+  const kernel = new CortexKernel(cfg.config);
 
   // Use custom container if provided
-  if (options.container) {
+  if (cfg.container) {
     // Transfer services to custom container
     // (This is advanced usage)
     // kernel.setContainer(options.container);
   }
 
   // Set custom tenant resolver
-  if (options.tenantResolver) {
-    kernel.setTenantResolver(options.tenantResolver);
+  if (cfg.tenantResolver) {
+    kernel.setTenantResolver(cfg.tenantResolver);
   }
 
   // Register plugins
-  if (options.plugins) {
-    for (const plugin of options.plugins) {
+  if (cfg.plugins) {
+    for (const plugin of cfg.plugins) {
       await kernel.registerPlugin(plugin);
     }
   }
 
   // Load tenants from file
-  if (options.tenantsFile) {
-    const tenants = await ConfigLoader.loadTenants(options.tenantsFile);
+  if (cfg.tenantsFile) {
+    const tenants = await ConfigLoader.loadTenants(cfg.tenantsFile);
     kernel.registerTenants(tenants);
   }
 
   // Register tenants
-  if (options.tenants) {
-    kernel.registerTenants(options.tenants);
+  if (cfg.tenants) {
+    kernel.registerTenants(cfg.tenants);
   }
 
   // Apply middleware
-  if (options.middleware) {
-    for (const middleware of options.middleware) {
+  if (cfg.middleware) {
+    for (const middleware of cfg.middleware) {
       kernel.use(middleware);
     }
   }

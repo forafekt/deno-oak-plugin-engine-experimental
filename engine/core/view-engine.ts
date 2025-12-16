@@ -67,10 +67,10 @@ export class EtaViewEngine implements ViewEngine {
    */
   async render(
     view: string,
-    data: Record<string, unknown> = {},
+    data: Record<string, any> = {},
     options: ViewRenderOptions = {}
   ): Promise<string> {
-    const tenant = options.tenant || this.currentTenant;
+    const tenant = data.tenant || options.tenant || this.currentTenant;
     const viewPath = await this.resolveView(view, {
       tenant,
       plugin: options.plugin,
@@ -87,9 +87,9 @@ export class EtaViewEngine implements ViewEngine {
 
     // Render with Eta
     const rendered = await this.eta.renderStringAsync(content, {
-      ...data,
       tenant,
       layout: options.layout,
+      ...data,
     });
 
     // Apply layout if specified
@@ -109,7 +109,7 @@ export class EtaViewEngine implements ViewEngine {
   private async renderWithLayout(
     layout: string,
     content: string,
-    data: Record<string, unknown>,
+    data: Record<string, any>,
     options: { tenant?: Tenant | null; plugin?: string }
   ): Promise<string> {
     const layoutPath = await this.resolveView(`layouts/${layout}`, options);
@@ -124,7 +124,7 @@ export class EtaViewEngine implements ViewEngine {
     return await this.eta.renderStringAsync(layoutContent, {
       ...data,
       content,
-      tenant: options.tenant,
+      tenant: data.tenant || options.tenant,
     });
   }
 

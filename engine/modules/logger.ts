@@ -4,10 +4,11 @@
  * Provides structured logging with levels and metadata
  */
 
+
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface LoggerOptions {
-  level?: LogLevel;
+  level?: LogLevel | string;
   prefix?: string;
   useColors?: boolean;
 }
@@ -31,7 +32,7 @@ const LOG_COLORS = {
   dim: "\x1b[2m",
 };
 
-const LOG_LEVELS: Record<LogLevel, number> = {
+const LOG_LEVELS: Record<LogLevel | string, number> = {
   debug: 0,
   info: 1,
   warn: 2,
@@ -39,36 +40,40 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 };
 
 export class ConsoleLogger implements Logger {
-  private level: LogLevel;
+  private level: LogLevel | string;
   private prefix: string;
   private useColors: boolean;
 
   constructor(
-    level: LogLevel = "info",
-    prefix: string = "[Cortex]",
+    level: LogLevel | string = "info",
+    prefix: string | undefined = `[${this.getRootDirname()}]`,
     useColors: boolean = true
   ) {
     this.level = level;
-    this.prefix = prefix;
+    this.prefix = prefix || "";
     this.useColors = useColors && typeof process !== "undefined" && process.stdout?.isTTY;
   }
 
-  private shouldLog(level: LogLevel): boolean {
+  private getRootDirname() {
+    return Deno.cwd().split('/').pop() || "";
+  }
+
+  private shouldLog(level: LogLevel | string): boolean {
     return LOG_LEVELS[level] >= LOG_LEVELS[this.level];
   }
 
   private formatMessage(
-    level: LogLevel,
+    level: LogLevel | string,
     message: string,
     meta?: Record<string, unknown>
   ): string {
     const timestamp = new Date().toISOString();
-    const levelUpper = level.toUpperCase().padEnd(5);
+    const levelUpper = level.toUpperCase().padEnd(5).trim();
     
     let output = "";
 
     if (this.useColors) {
-      const color = LOG_COLORS[level];
+      const color = LOG_COLORS[level as LogLevel];
       const reset = LOG_COLORS.reset;
       const dim = LOG_COLORS.dim;
       
@@ -88,7 +93,7 @@ export class ConsoleLogger implements Logger {
 
   private safeJsonReplacer(): (key: string, value: unknown) => unknown {
     const seen = new WeakSet();
-    return (key: string, value: unknown) => {
+    return (_key: string, value: unknown) => {
       if (typeof value === "object" && value !== null) {
         if (seen.has(value)) {
           return "[Circular]";
@@ -149,7 +154,7 @@ export class ConsoleLogger implements Logger {
     this.prefix = prefix;
   }
 
-  getLevel(): LogLevel {
+  getLevel(): LogLevel | string {
     return this.level;
   }
 
@@ -236,17 +241,15 @@ export class MemoryLogger implements Logger {
  * Create a logger instance
  */
 export function createLogger(
-  level: LogLevel = "info",
-  prefix = "[Cortex]",
-  useColors = true
+  options?: LoggerOptions
 ): Logger {
-  return new ConsoleLogger(level, prefix, useColors);
+  return new ConsoleLogger(options?.level, options?.prefix, options?.useColors);
 }
 
 /**
  * Create a logger from environment variables
  */
-export function createLoggerFromEnv(prefix = "[Cortex]"): Logger {
+export function createLoggerFromEnv(prefix: string | undefined): Logger {
   const level = (
     typeof process !== "undefined" 
       ? process.env?.LOG_LEVEL 
@@ -254,7 +257,10 @@ export function createLoggerFromEnv(prefix = "[Cortex]"): Logger {
   ) as LogLevel | undefined;
   
   return createLogger(
-    level || "info",
-    prefix
+    {
+      level: level || "info",
+      prefix,
+      useColors: true
+    }
   );
 }

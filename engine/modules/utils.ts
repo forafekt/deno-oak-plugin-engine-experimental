@@ -22,6 +22,17 @@ export async function fileExists(path: string): Promise<boolean> {
     return false;
   }
 }
+/**
+ * Check if dir exists
+ */
+export async function dirExists(path: string): Promise<boolean> {
+  try {
+    await Deno.stat(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Ensure directory exists
@@ -46,11 +57,11 @@ export async function* walkDir(
   try {
     for await (const entry of Deno.readDir(dir)) {
       const path = `${dir}/${entry.name}`;
-      
+
       if (entry.isDirectory) {
         yield* walkDir(path, extensions);
       } else if (entry.isFile) {
-        if (!extensions || extensions.some(ext => path.endsWith(ext))) {
+        if (!extensions || extensions.some((ext) => path.endsWith(ext))) {
           yield path;
         }
       }
@@ -68,14 +79,14 @@ export function deepMerge<T extends Record<string, unknown>>(
   ...sources: Partial<T>[]
 ): T {
   if (!sources.length) return target;
-  
+
   const result = { ...target };
-  
+
   for (const source of sources) {
     for (const key in source) {
       const sourceValue = source[key];
       const targetValue = result[key];
-      
+
       if (isObject(sourceValue) && isObject(targetValue)) {
         result[key] = deepMerge(
           targetValue as Record<string, unknown>,
@@ -86,7 +97,7 @@ export function deepMerge<T extends Record<string, unknown>>(
       }
     }
   }
-  
+
   return result;
 }
 
@@ -106,9 +117,9 @@ export async function tryCatch<T>(
     return [result, null];
   } catch (error) {
     if (errorMessage) {
-      return [null, new Error(`${errorMessage}: ${error.message}`)];
+      return [null, new Error(`${errorMessage}: ${(error as Error).message}`)];
     }
-    return [null, error];
+    return [null, error as Error];
   }
 }
 
@@ -120,7 +131,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   delay: number
 ): (...args: Parameters<T>) => void {
   let timeoutId: number | undefined;
-  
+
   return (...args: Parameters<T>) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
@@ -154,4 +165,51 @@ export function parseConnectionString(
     pathname: url.pathname.slice(1),
     database: url.pathname.slice(1),
   };
+}
+
+export function resolveImportPath(path: string): string {
+  const cwd = Deno.cwd();
+  const url = new URL(path, `file://${cwd}/`);
+  const resolvedPath = Deno.realPathSync(url.pathname);
+  return resolvedPath;
+}
+
+export async function bootstrapConfigParser<R extends Record<string, any>>(
+  config: string | R,
+  loader: "import" | "deno" = "import"
+): Promise<R> {
+  const codeFiles = [".ts", ".js", ".cjs", ".mjs"];
+
+  if (typeof config === "string") {
+    const useEsmImport =
+      loader === "import" ||
+      codeFiles.includes(config.slice(-3)) ||
+      codeFiles.includes(config.slice(-4));
+
+    // import file
+    if (useEsmImport) {
+      const [result, error] = await tryCatch(async () => {
+        const content = await import(resolveImportPath(config));
+        return content?.default || content;
+      }, "Failed to import config file");
+
+      if (error) {
+        throw error;
+      }
+      return result as R;
+    }
+
+    // deno read text file
+    const [result, error] = await tryCatch(async () => {
+      const content = await Deno.readTextFile(resolveImportPath(config));
+      return JSON.parse(content) as R;
+    }, "Failed to read config file");
+
+    if (error) {
+      throw error;
+    }
+    return result as R;
+  }
+
+  return config as R;
 }
