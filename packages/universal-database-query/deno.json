@@ -1,0 +1,8 @@
+{
+  "name": "@oakseed/database-query",
+  "version": "0.1.0",
+  "description": "A universal database query builder for Deno",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

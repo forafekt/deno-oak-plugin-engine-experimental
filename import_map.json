@@ -1,0 +1,7 @@
+{
+    "imports": {
+        "@oakseed/engine/": "./packages/oakseed-engine/",
+        "@oakseed/database-engine/": "./packages/tenant-database-engine/",
+        "@oakseed/database-query/": "./packages/universal-database-query/"
+    }
+}

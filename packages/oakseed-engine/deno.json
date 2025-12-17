@@ -1,0 +1,9 @@
+{
+  "name": "@oakseed/engine",
+  "version": "0.1.0",
+  "description": "An engine for Deno Oak",
+  "exports": {
+    ".": "./mod.ts",
+    "./plugins/*": "./plugins/*"
+  }
+}

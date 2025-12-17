@@ -1,0 +1,29 @@
+{
+  "tasks": {
+    "start": "deno run --allow-net --allow-read --allow-write --allow-env --unstable main.ts",
+    "dev": "deno run --allow-all --watch main.ts",
+    "dev:all": "deno task dev:js & deno task dev:css & deno task dev",
+    "test": "deno test --allow-net --allow-read --allow-write --allow-env --unstable",
+    "build:js": "deno run --allow-all @oakseed/engine/runtime/build.ts . ./.out/js",
+    "build:css": "deno run --allow-all @oakseed/engine/runtime/sass.ts . ./.out/css",
+    "dev:js": "deno run --allow-all @oakseed/engine/runtime/build.ts . ./.out/js --watch --plugins",
+    "dev:css": "deno run --allow-all @oakseed/engine/runtime/sass.ts . ./.out/css --watch --plugins"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window", "deno.unstable", "deno.worker", "dom", "dom.iterable", "dom.asynciterable", "esnext"],
+    "strict": true
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 80,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }
+}

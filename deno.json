@@ -1,0 +1,15 @@
+{
+  "tasks": {
+    "dev:demo": "deno run --allow-all demo/deno.json dev:all",
+    "test": "deno test -A",
+    "lint": "deno lint",
+    "fmt": "deno fmt"
+  },
+
+  "workspace": [
+    "packages/*",
+    "demo/"
+  ],
+
+  "importMap": "./import_map.json"
+}

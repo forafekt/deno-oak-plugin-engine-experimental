@@ -1,0 +1,38 @@
+{
+  "name": "@oakseed/database-engine",
+  "version": "0.1.0",
+  "description": "A modular multi-tenant engine with background workers for Deno",
+  "exports": {
+    ".": "./mod.ts",
+    "./types": "./types.ts",
+    "./engine": "./engine.ts",
+    "./adapters/mysql": "./adapters/mysql.ts",
+    "./adapters/worker": "./adapters/worker.ts"
+  },
+  "tasks": {
+    "test": "deno test --allow-net --allow-read --allow-write",
+    "fmt": "deno fmt",
+    "lint": "deno lint",
+    "check": "deno check mod.ts",
+    "example:basic": "deno run --allow-net examples/basic.ts",
+    "example:complete": "deno run --allow-net examples/complete.ts"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "fmt": {
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "semiColons": true,
+    "singleQuote": true
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }
+}
