@@ -1,15 +1,16 @@
 {
   "tasks": {
-    "dev:demo": "deno run --allow-all demo/deno.json dev:all",
+    "dev:demo": "cd demo && deno run dev:all",
     "test": "deno test -A",
     "lint": "deno lint",
-    "fmt": "deno fmt"
+    "fmt": "deno fmt",
+    "clean:prune": "rm -rf deno.lock node_modules && deno clean",
+    "clean:install": "deno task clean:prune && deno install"
   },
 
   "workspace": [
     "packages/*",
     "demo/"
   ],
-
   "importMap": "./import_map.json"
 }

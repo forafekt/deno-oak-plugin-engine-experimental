@@ -45,6 +45,10 @@ export class SassCompiler {
       
       // Remove comments
       processed = processed.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "");
+
+      // ensure imports are .css
+      processed = processed.replaceAll(/\.scss|\.sass/g, ".css");
+
       
       // Minify if requested
       if (this.options.minify) {

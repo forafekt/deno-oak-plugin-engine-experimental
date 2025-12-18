@@ -4,10 +4,10 @@
 //  * These interfaces define the contracts for all engine components
 //  */
 
-import { Context, Middleware } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { Context, Middleware } from "@oakseed/x/oak.ts";
 import { LoggerOptions } from "../modules/logger.ts";
-import { Tenant, TenantResolver } from "./tenant-manager.ts";
-import { Plugin } from "./plugin-manager.ts";
+import { Tenant, TenantResolver } from "./tenant_manager.ts";
+import { Plugin } from "./plugin_manager.ts";
 import { Container } from "./container.ts";
 
 /**

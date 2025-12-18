@@ -141,81 +141,9 @@ router.register({
 //   },
 // });
 
-// Graceful shutdown
-const shutdown = async () => {
-  const logger = container.resolve<Logger>("logger");
-  logger.info("Received shutdown signal");
-  
-  await engine.shutdown();
-  Deno.exit(0);
-};
 
-Deno.addSignalListener("SIGINT", shutdown);
-Deno.addSignalListener("SIGTERM", shutdown);
 
-// Print diagnostic information
-// console.log("\n" + "═".repeat(70));
-// console.log("🎉 OakSeed Engine Ready");
-// console.log("═".repeat(70));
 
-// const config = engine.getConfig();
-// const tenants = tenantManager.listTenants();
-// const plugins = container.resolve<PluginManager>("plugins").list();
-
-// console.log("\n📊 System Information:");
-// console.log(`   Environment: ${config.env}`);
-// console.log(`   Log Level: ${config.logger?.level}`);
-// console.log(`   Server: http://${config.hostname}:${config.port}`);
-
-// console.log("\n🔌 Loaded Plugins:");
-// plugins.forEach(name => console.log(`   - ${name}`));
-
-// console.log("\n🏢 Registered Tenants:");
-// tenants.forEach(t => {
-//   console.log(`   - ${t.id} (${t.name})`);
-//   console.log(`     Plugins: ${t.plugins.join(", ")}`);
-// });
-
-// console.log("\n🌐 Access URLs:");
-// console.log(`   Main: http://${config.hostname}:${config.port}`);
-// console.log(`   Health: http://${config.hostname}:${config.port}/health`);
-// console.log(`   Tenants: http://${config.hostname}:${config.port}/api/tenants`);
-
-// console.log("\n🏢 Tenant Dashboards (Path-Based):");
-// tenants.forEach(t => {
-//   console.log(`   ${t.name}: http://${config.hostname}:${config.port}/tenant/${t.id}/dashboard`);
-// });
-
-// if (tenants.some(t => t.subdomain)) {
-//   console.log("\n🌍 Tenant Dashboards (Subdomain - Requires Hosts File):");
-//   tenants.filter(t => t.subdomain).forEach(t => {
-//     console.log(`   ${t.name}: http://${t.subdomain}.${config.hostname}:${config.port}/dashboard`);
-//   });
-//   console.log("\n   ⚠️  For subdomain routing, add to /etc/hosts:");
-//   tenants.filter(t => t.subdomain).forEach(t => {
-//     console.log(`   127.0.0.1 ${t.subdomain}.${config.hostname}`);
-//   });
-// }
-
-// console.log("\n📍 Registered Routes:");
-// const routes = router.getRoutes();
-// console.log(`   Total: ${routes.length}`);
-// console.log(`   Global: ${router.getGlobalRoutes().length}`);
-// console.log(`   Tenant: ${router.getTenantRoutes().length}`);
-
-// if (engine.isDebug()) {
-//   router.printRoutes();
-// }
-
-// console.log("\n💡 Quick Test:");
-// console.log(`   curl http://${config.hostname}:${config.port}/health`);
-// if (tenants.length > 0) {
-//   const firstTenant = tenants[0];
-//   console.log(`   curl http://${config.hostname}:${config.port}/tenant/${firstTenant.id}/dashboard`);
-// }
-
-// console.log("\n" + "═".repeat(70));
-// console.log("Press Ctrl+C to stop\n");
 
 // Start the server
 await engine.listen();

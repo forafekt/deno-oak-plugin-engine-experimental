@@ -4,9 +4,9 @@
  * Eta-based template rendering with multi-level overrides
  */
 
-import { Eta } from "https://deno.land/x/eta@v3.1.0/src/index.ts";
+import { Eta } from "@oakseed/x/eta.ts";
 import { fileExists } from "../modules/utils.ts";
-import { Tenant } from "./tenant-manager.ts";
+import { Tenant } from "./tenant_manager.ts";
 import { Logger } from "../modules/logger.ts";
 
 /**
@@ -216,10 +216,6 @@ export class EtaViewEngine implements ViewEngine {
 
             // reverse if is remote http url
             if (v.startsWith("http://") || v.startsWith("https://")) {
-              // create blob url
-              // const response = await fetch(v);
-              // const blob = new Blob([response.body], { type: "text/plain" });
-              // return [k, URL.createObjectURL(blob)];
               return [k, v];
             }
 

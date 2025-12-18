@@ -4,8 +4,8 @@
  * Complete fileSystemRouter implementation
  */
 
-import { send } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { join } from "https://deno.land/std@0.200.0/path/mod.ts";
+import { send } from "@oakseed/x/oak.ts";
+import { join } from "@oakseed/x/std/path.ts";
 import {
   Plugin,
   Container,

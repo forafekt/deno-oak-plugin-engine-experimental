@@ -3,7 +3,7 @@
  * SQLite Database Driver Implementation
  */
 
-import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
+import { DB } from "@oakseed/x/sqlite.ts";
 import { DatabaseDriver } from "../../core/types.ts";
 import { Logger } from "../../modules/logger.ts";
 

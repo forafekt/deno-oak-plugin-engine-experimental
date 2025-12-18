@@ -7,10 +7,10 @@
 // Core exports
 export * from "./core/kernel.ts";
 export * from "./core/container.ts";
-export * from "./core/plugin-manager.ts";
-export * from "./core/tenant-manager.ts";
-export * from "./core/worker-manager.ts";
-export * from "./core/view-engine.ts";
+export * from "./core/plugin_manager.ts";
+export * from "./core/tenant_manager.ts";
+export * from "./core/worker_manager.ts";
+export * from "./core/view_engine.ts";
 export * from "./core/router.ts";
 export * from "./core/config.ts";
 
@@ -21,6 +21,10 @@ export * from "./core/types.ts";
 export * from "./modules/logger.ts";
 export * from "./modules/events.ts";
 export * as utils from "./modules/utils.ts";
+
+// Middleware exports
+export * from './middleware/cors/mod.ts';
+export * from './middleware/debug/mod.ts';
 
 // Version
 export const VERSION = "1.0.0";

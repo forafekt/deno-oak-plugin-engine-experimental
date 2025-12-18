@@ -11,11 +11,11 @@ import type {
   RouterOptions,
   State as OakContextState,
   RouteParams,
-} from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+} from "@oakseed/x/oak.ts";
+import { Router } from "@oakseed/x/oak.ts";
 import type { Container } from "./container.ts";
 import type { Logger } from "../modules/logger.ts";
-import type { Tenant, TenantManager } from "./tenant-manager.ts";
+import type { Tenant, TenantManager } from "./tenant_manager.ts";
 
 export interface RouteDefinition {
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";

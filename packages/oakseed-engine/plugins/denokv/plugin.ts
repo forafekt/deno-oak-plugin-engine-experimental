@@ -5,8 +5,8 @@
  */
 
 import { Container } from "../../core/container.ts";
-import { Plugin, PluginConfig } from "../../core/plugin-manager.ts";
-import { Tenant, TenantManager } from "../../core/tenant-manager.ts";
+import { Plugin, PluginConfig } from "../../core/plugin_manager.ts";
+import { Tenant, TenantManager } from "../../core/tenant_manager.ts";
 import { CacheDriver, DatabaseDriver } from "../../core/types.ts";
 import { EventEmitter } from "../../modules/events.ts";
 import { Logger } from "../../modules/logger.ts";

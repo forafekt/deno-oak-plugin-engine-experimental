@@ -3,7 +3,7 @@
  * MySQL Database Driver Implementation
  */
 
-import { Client } from "https://deno.land/x/mysql@v2.12.1/mod.ts";
+import { Client } from "@oakseed/x/mysql.ts";
 import { DatabaseDriver } from "../../core/types.ts";
 import { parseConnectionString } from "../../modules/utils.ts";
 import { Logger } from "../../modules/logger.ts";

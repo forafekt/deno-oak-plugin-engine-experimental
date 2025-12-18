@@ -6,7 +6,7 @@
 
 import type { OakSeedConfig, DefineConfig } from "./types.ts";
 import { deepMerge, fileExists, loadJSON } from "../modules/utils.ts";
-import type { Tenant } from "./tenant-manager.ts";
+import type { Tenant } from "./tenant_manager.ts";
 
 const DEFAULT_CONFIG: OakSeedConfig = {
   port: 8000,

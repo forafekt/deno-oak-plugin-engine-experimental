@@ -48,7 +48,7 @@ export async function ensureDir(path: string): Promise<void> {
 }
 
 /**
- * Walk directory recursively
+ * Async Walk directory recursively
  */
 export async function* walkDir(
   dir: string,
@@ -60,6 +60,27 @@ export async function* walkDir(
 
       if (entry.isDirectory) {
         yield* walkDir(path, extensions);
+      } else if (entry.isFile) {
+        if (!extensions || extensions.some((ext) => path.endsWith(ext))) {
+          yield path;
+        }
+      }
+    }
+  } catch {
+    // Directory doesn't exist, ignore
+  }
+}
+
+/**
+ * Sync Walk directory recursively
+ */
+export function* walkDirSync(dir: string, extensions?: string[]): IterableIterator<string> {
+   try {
+    for (const entry of Deno.readDirSync(dir)) {
+      const path = `${dir}/${entry.name}`;
+
+      if (entry.isDirectory) {
+        yield* walkDirSync(path, extensions);
       } else if (entry.isFile) {
         if (!extensions || extensions.some((ext) => path.endsWith(ext))) {
           yield path;
