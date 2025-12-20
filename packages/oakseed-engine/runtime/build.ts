@@ -9,6 +9,7 @@ import { walkDir, ensureDir } from "../modules/utils.ts";
 import { type Logger, ConsoleLogger } from "../modules/logger.ts";
 import { dependencyScanner } from "./esbuild/plugins/dependency_scanner.ts";
 import { commentsRemover } from "./esbuild/plugins/comments_remover.ts";
+import { hmrPlugin } from "./esbuild/plugins/hmr.ts";
 
 async function oakSeedPluginResolver() {
   const plugins = [];
@@ -200,44 +201,36 @@ if (import.meta.main) {
   const outDir = args[1] || "./.out/js";
   const pluginOutDir = "./.out/js/plugins";
 
-  // rest of args as EsBuildRuntime options
+  // rest of args                          as EsBuildRuntime options
   const options = args.slice(2).filter((arg) => arg !== "--watch" && arg !== "--plugins");
 
   const parsedOptions = argOptionsParser(options);
 
-  console.log(parsedOptions);
+  const entryPoints = ["app/main.ts"]
 
-  const localPlugins = await localPluginResolver();
+  if (includePlugins) {
+    const localPlugins = await localPluginResolver();
+    entryPoints.push(...localPlugins)
+    const oakSeedPlugins = await oakSeedPluginResolver();
+    entryPoints.push(...oakSeedPlugins)
+  }
+
 
   const builders = [
     new EsBuildRuntime({
       outdir: outDir,
       watch: watch,
-      entryPoints: ["app/main.ts", ...localPlugins],
+      entryPoints,
       sourcemap: true,
       bundle: true,
-      external: ["@oakseed/x", "@oakseed/engine", "@oakseed/database-engine", "@oakseed/database-query"],
-      plugins: [dependencyScanner, commentsRemover],
+      platform: "browser",
+      color: true,
+      entryNames: "[dir]/[name]-[hash]",
+      // external: ["@oakseed/x", "@oakseed/engine", "@oakseed/database-engine", "@oakseed/database-query"],
+      plugins: [dependencyScanner, commentsRemover, hmrPlugin],
       ...parsedOptions,
     }),
   ];
-
-  if (includePlugins) {
-    const oakSeedPlugins = await oakSeedPluginResolver();
-
-    builders.push(
-      new EsBuildRuntime({
-        outdir: pluginOutDir,
-        watch: watch,
-        entryPoints: oakSeedPlugins,
-        sourcemap: true,
-        bundle: true,
-        external: ["@oakseed/x", "@oakseed/engine", "@oakseed/database-engine", "@oakseed/database-query"],
-        plugins: [dependencyScanner, commentsRemover],
-        ...parsedOptions,
-      })
-    );
-  }
 
   if (watch) {
     await Promise.all(builders.map((builder) => builder.watch()));

@@ -7,7 +7,11 @@
     "build:js": "deno run --allow-all @oakseed/engine/runtime/build.ts . ./.out/js",
     "build:css": "deno run --allow-all @oakseed/engine/runtime/sass.ts . ./.out/css",
     "dev:js": "deno run --allow-all @oakseed/engine/runtime/build.ts . ./.out/js minify=false sourcemap=true --watch --plugins",
-    "dev:css": "deno run --allow-all @oakseed/engine/runtime/sass.ts . ./.out/css --watch --plugins"
+    "dev:css": "deno run --allow-all @oakseed/engine/runtime/sass.ts . ./.out/css --watch --plugins",
+    "dev:client": "deno task dev:js & deno task dev:css",
+    "runtime:dev": "cd app && deno run --allow-all @oakseed/runtime/cli/cli.ts dev",
+    "runtime:build": "cd app && deno run --allow-all @oakseed/runtime/cli/cli.ts build",
+    "runtime:preview": "cd app && deno run --allow-all @oakseed/runtime/cli/cli.ts preview"
   },
   "compilerOptions": {
     "lib": ["deno.window", "deno.unstable", "deno.worker", "dom", "dom.iterable", "dom.asynciterable", "esnext"],
