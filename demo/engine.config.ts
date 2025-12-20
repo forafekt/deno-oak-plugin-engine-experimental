@@ -1,5 +1,5 @@
 import { ConfigLoader, corsMiddleware, debugMiddleware } from "@oakseed/engine/mod.ts";
-import { DashboardPlugin, MySQLPlugin, SQLitePlugin, DenoKVPlugin, FileSystemRouterPlugin } from "@oakseed/engine/plugins/mod.ts";
+import { DashboardPlugin, MySQLPlugin, SQLitePlugin, DenoKVPlugin, FileSystemRouterPlugin } from "@oakseed/plugins/mod.ts";
 import { BlogPlugin } from "./plugins/blog/plugin.ts";
 import { AnalyticsPlugin } from "./plugins/analytics/plugin.ts";
 

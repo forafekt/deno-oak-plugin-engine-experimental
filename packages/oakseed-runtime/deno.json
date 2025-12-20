@@ -1,0 +1,8 @@
+{
+  "name": "@oakseed/runtime",
+  "version": "0.1.0",
+  "description": "Runtime environment for Oakseed engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

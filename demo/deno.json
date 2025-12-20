@@ -2,13 +2,7 @@
   "tasks": {
     "start": "deno run --allow-net --allow-read --allow-write --allow-env --unstable main.ts",
     "dev": "deno run --allow-all --watch main.ts",
-    "dev:all": "deno task dev:js & deno task dev:css & deno task dev",
     "test": "deno test --allow-net --allow-read --allow-write --allow-env --unstable",
-    "build:js": "deno run --allow-all @oakseed/engine/runtime/build.ts . ./.out/js",
-    "build:css": "deno run --allow-all @oakseed/engine/runtime/sass.ts . ./.out/css",
-    "dev:js": "deno run --allow-all @oakseed/engine/runtime/build.ts . ./.out/js minify=false sourcemap=true --watch --plugins",
-    "dev:css": "deno run --allow-all @oakseed/engine/runtime/sass.ts . ./.out/css --watch --plugins",
-    "dev:client": "deno task dev:js & deno task dev:css",
     "runtime:dev": "cd app && deno run --allow-all @oakseed/runtime/cli/cli.ts dev",
     "runtime:build": "cd app && deno run --allow-all @oakseed/runtime/cli/cli.ts build",
     "runtime:preview": "cd app && deno run --allow-all @oakseed/runtime/cli/cli.ts preview"

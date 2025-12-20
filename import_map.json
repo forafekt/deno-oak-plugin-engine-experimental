@@ -18,6 +18,13 @@
         "@oakseed/database-engine/": "./packages/tenant-database-engine/",
         "@oakseed/database-query/": "./packages/universal-database-query/",
         "@oakseed/x/": "./packages/oakseed-dependencies/",
-        "@oakseed/runtime/": "./packages/oakseed-runtime/"
+        "@oakseed/runtime/": "./packages/oakseed-runtime/",
+        "@oakseed/plugins/": "./packages/oakseed-plugins/",
+        "@oakseed/di/": "./packages/oakseed-di/",
+        "@oakseed/utils/": "./packages/oakseed-utils/",
+        "@oakseed/config/": "./packages/oakseed-config/",
+        "@oakseed/types/": "./packages/oakseed-types/", 
+        "@oakseed/logger/": "./packages/oakseed-logger/",
+        "@oakseed/events/": "./packages/oakseed-events/"
     }
 }

@@ -7,7 +7,7 @@ export * from "./adapters/worker.ts";
 import { MultiTenantEngine } from "./engine.ts";
 import { MySQLAdapter } from "./adapters/mysql.ts";
 import { BackgroundWorkerAdapter } from "./adapters/worker.ts";
-import type { EngineConfig } from "./types.ts";
+import type { DatabaseAdapter, EngineConfig } from "./types.ts";
 
 /**
  * Factory function to create a MultiTenantEngine with MySQL support
@@ -54,13 +54,24 @@ export class EngineBuilder {
     return this;
   }
 
-  buildMySQL(): MultiTenantEngine {
-    if (!this.config.database) {
-      throw new Error("Database configuration is required");
-    }
+  // buildMySQL(): MultiTenantEngine {
+  //   if (!this.config.database) {
+  //     throw new Error("Database configuration is required");
+  //   }
 
-    return createMySQLEngine(this.config as EngineConfig);
-  }
+  //   return createMySQLEngine(this.config as EngineConfig);
+  // }
+
+  build(adapter: DatabaseAdapter | 'mysql'): MultiTenantEngine {
+  const databaseAdapter = adapter === 'mysql' ? new MySQLAdapter(this.config.database!, this.config.tablePrefix || "mt_") : adapter;
+
+  const workerAdapter = new BackgroundWorkerAdapter(
+    databaseAdapter,
+    this.config.worker,
+  );
+
+  return new MultiTenantEngine(databaseAdapter, workerAdapter, this.config);
+}
 }
 
 export function engineBuilder(): EngineBuilder {

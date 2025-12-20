@@ -1,0 +1,10 @@
+{
+  "name": "@oakseed/middleware",
+  "version": "0.1.0",
+  "description": "Middleware for Deno Oak",
+  "exports": {
+    ".": "./mod.ts",
+    "./cors": "./cors/mod.ts",
+    "./debug": "./debug/mod.ts"
+  }
+}

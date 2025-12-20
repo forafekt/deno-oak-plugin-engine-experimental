@@ -14,12 +14,12 @@ export class MultiTenantEngine {
   private databaseAdapter: DatabaseAdapter;
   private workerAdapter: WorkerAdapter;
   private plugins = new Map<string, Plugin>();
-  private config: EngineConfig;
+  private config: Partial<EngineConfig>;
 
   constructor(
     databaseAdapter: DatabaseAdapter,
     workerAdapter: WorkerAdapter,
-    config: EngineConfig,
+    config: Partial<EngineConfig>,
   ) {
     this.databaseAdapter = databaseAdapter;
     this.workerAdapter = workerAdapter;
@@ -27,6 +27,9 @@ export class MultiTenantEngine {
   }
 
   async initialize(): Promise<void> {
+    if (!this.config.database) {
+      throw new Error('Database configuration is required');
+    }
     // Connect to database
     await this.databaseAdapter.connect(this.config.database);
 
@@ -198,7 +201,7 @@ export class MultiTenantEngine {
 
   // Configuration access
   getConfig(): EngineConfig {
-    return { ...this.config };
+    return { ...this.config as EngineConfig };
   }
 
   // Database adapter access for advanced usage

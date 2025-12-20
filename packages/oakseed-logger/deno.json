@@ -1,0 +1,8 @@
+{
+  "name": "@oakseed/logger",
+  "version": "0.1.0",
+  "description": "Logger module for Oakseed engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

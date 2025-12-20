@@ -1,0 +1,8 @@
+{
+  "name": "@oakseed/di",
+  "version": "0.1.0",
+  "description": "Dependency Injection for Oakseed",
+  "exports": {
+    "./mod.ts": "./mod.ts"
+  }
+}
