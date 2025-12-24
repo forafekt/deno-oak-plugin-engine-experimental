@@ -6,6 +6,7 @@ export type HMRMessage =
   | { type: "update"; updates: HMRUpdate[] }
   | { type: "full-reload"; path?: string }
   | { type: "error"; error: { message: string; stack?: string } }
+  | { type: "error-clear" }
   | { type: "pong" };
 
 export interface HMRUpdate {

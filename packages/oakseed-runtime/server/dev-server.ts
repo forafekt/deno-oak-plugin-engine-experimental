@@ -43,6 +43,7 @@ export class DevServer {
         console.log(`  ➜ Network: use --host to expose\n`);
       },
     }, (req) => this.middleware.handle(req, () => this.handleRequest(req)));
+    await Promise.resolve();
   }
 
   async stop(): Promise<void> {
@@ -64,11 +65,6 @@ export class DevServer {
         headers: { "Content-Type": "application/javascript" },
       });
     }
-    // if (url.pathname === "/__error_overlay.js") {
-    //   return new Response(ERROR_OVERLAY_RUNTIME, {
-    //     headers: { "Content-Type": "application/javascript" },
-    //   });
-    // }
 
     // 3. Serve from esbuild output (built modules)
     if (url.pathname.startsWith("/__build/")) {
@@ -146,82 +142,87 @@ export class DevServer {
   }
 }
 
-const HMR_CLIENT_CODE = `
-// HMR Client Runtime
-console.log('[HMR] Connecting...');
 
-const socket = new WebSocket('ws://' + location.host + '/__hmr');
+const HMR_CLIENT_CODE = Deno.readTextFileSync(
+  new URL("../hmr/client.js", import.meta.url),
+);
 
-socket.addEventListener('open', () => {
-  console.log('[HMR] Connected');
-});
+// const HMR_CLIENT_CODE = `
+// // HMR Client Runtime
+// console.log('[HMR] Connecting...');
 
-socket.addEventListener('message', async (event) => {
-  const message = JSON.parse(event.data);
+// const socket = new WebSocket('ws://' + location.host + '/__hmr');
+
+// socket.addEventListener('open', () => {
+//   console.log('[HMR] Connected');
+// });
+
+// socket.addEventListener('message', async (event) => {
+//   const message = JSON.parse(event.data);
   
-  if (message.type === 'full-reload') {
-    console.log('[HMR] Full reload', message.path || '');
-    location.reload();
-    return;
-  }
+//   if (message.type === 'full-reload') {
+//     console.log('[HMR] Full reload', message.path || '');
+//     location.reload();
+//     return;
+//   }
   
-  if (message.type === 'update') {
-    console.log('[HMR] Updating modules:', message.updates.length);
+//   if (message.type === 'update') {
+//     console.log('[HMR] Updating modules:', message.updates.length);
     
-    for (const update of message.updates) {
-      try {
-        // Create a blob URL for the new module
-        const blob = new Blob([update.code], { type: 'application/javascript' });
-        const url = URL.createObjectURL(blob);
+//     for (const update of message.updates) {
+//       try {
+//         // Create a blob URL for the new module
+//         const blob = new Blob([update.code], { type: 'application/javascript' });
+//         const url = URL.createObjectURL(blob);
         
-        // Dynamically import the new version
-        await import(url + '?t=' + update.timestamp);
+//         // Dynamically import the new version
+//         await import(url + '?t=' + update.timestamp);
         
-        console.log('[HMR] Updated:', update.path);
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        console.error('[HMR] Update failed:', err);
-        location.reload();
-      }
-    }
-  }
+//         console.log('[HMR] Updated:', update.path);
+//         URL.revokeObjectURL(url);
+//       } catch (err) {
+//         console.error('[HMR] Update failed:', err);
+//         location.reload();
+//       }
+//     }
+//   }
   
-  if (message.type === 'error') {
-    console.error('[HMR] Error:', message.error);
-  }
-});
+//   if (message.type === 'error') {
+//     console.error('[HMR] Error:', message.error);
+//   }
+// });
 
-socket.addEventListener('close', () => {
-  console.log('[HMR] Disconnected. Attempting to reconnect...');
-  setTimeout(() => location.reload(), 1000);
-});
+// socket.addEventListener('close', () => {
+//   console.log('[HMR] Disconnected. Attempting to reconnect...');
+//   setTimeout(() => location.reload(), 1000);
+// });
 
-socket.addEventListener('error', (err) => {
-  console.error('[HMR] WebSocket error:', err);
-});
+// socket.addEventListener('error', (err) => {
+//   console.error('[HMR] WebSocket error:', err);
+// });
 
-// Export HMR API for modules
-export const hot = {
-  accept(deps, callback) {
-    // Module accepts updates
-    console.log('[HMR] Module accepts updates:', deps);
-  },
-  decline() {
-    // Module requires full reload
-    console.log('[HMR] Module declines updates');
-  },
-  dispose(callback) {
-    // Cleanup before module replacement
-    console.log('[HMR] Module cleanup registered');
-  },
-  invalidate() {
-    // Force reload this module
-    location.reload();
-  },
-  data: {},
-};
+// // Export HMR API for modules
+// export const hot = {
+//   accept(deps, callback) {
+//     // Module accepts updates
+//     console.log('[HMR] Module accepts updates:', deps);
+//   },
+//   decline() {
+//     // Module requires full reload
+//     console.log('[HMR] Module declines updates');
+//   },
+//   dispose(callback) {
+//     // Cleanup before module replacement
+//     console.log('[HMR] Module cleanup registered');
+//   },
+//   invalidate() {
+//     // Force reload this module
+//     location.reload();
+//   },
+//   data: {},
+// };
 
-if (import.meta) {
-  import.meta.hot = hot;
-}
-`;
+// if (import.meta) {
+//   import.meta.hot = hot;
+// }
+// `;

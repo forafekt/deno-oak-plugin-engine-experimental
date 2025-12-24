@@ -15,9 +15,6 @@
         "mysql": "https://deno.land/x/mysql@v2.12.1/mod.ts",
         "sqlite": "https://deno.land/x/sqlite@v3.9.1/mod.ts",
         "@oakseed/engine/": "./packages/oakseed-engine/",
-        "@oakseed/database-engine/": "./packages/tenant-database-engine/",
-        "@oakseed/database-query/": "./packages/universal-database-query/",
-        "@oakseed/x/": "./packages/oakseed-dependencies/",
         "@oakseed/runtime/": "./packages/oakseed-runtime/",
         "@oakseed/plugins/": "./packages/oakseed-plugins/",
         "@oakseed/di/": "./packages/oakseed-di/",
@@ -25,6 +22,9 @@
         "@oakseed/config/": "./packages/oakseed-config/",
         "@oakseed/types/": "./packages/oakseed-types/", 
         "@oakseed/logger/": "./packages/oakseed-logger/",
-        "@oakseed/events/": "./packages/oakseed-events/"
+        "@oakseed/events/": "./packages/oakseed-events/",
+        "@oakseed/x/": "./packages-internal/oakseed-dependencies/",
+        "@oakseed/database-engine/": "./labs/tenant-database-engine/",
+        "@oakseed/database-query/": "./labs/universal-database-query/"
     }
 }

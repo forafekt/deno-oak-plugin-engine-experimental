@@ -37,7 +37,7 @@ export class Builder {
       bundle: true,
       format: "esm",
       outdir: this.config.build.outDir,
-      logLevel: 'verbose',
+      logLevel: 'info',
       
       // Dev vs prod
       minify: this.config.build.minify,
@@ -51,7 +51,7 @@ export class Builder {
       
       // Platform
       platform: "browser",
-      target: ["es2020"],
+      target: ["esnext"],
       external: this.config.build.external,
       
       plugins: esbuildPlugins,

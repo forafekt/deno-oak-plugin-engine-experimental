@@ -5,12 +5,14 @@ import type * as esbuild from "@oakseed/x/esbuild.ts";
 import type { ResolvedConfig } from "../config/loader.ts";
 import type { BuildResult } from "../build/builder.ts";
 import type { DevServer } from "../server/dev-server.ts";
+import type { HMREngineImpl } from "../hmr/engine.ts";
 
 export interface HMRContext {
   file: string;
   timestamp: number;
   modules: Set<string>;
   read: () => Promise<string>;
+  engine: HMREngineImpl;
 }
 
 export interface RuntimePlugin {

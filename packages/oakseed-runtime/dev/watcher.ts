@@ -24,11 +24,13 @@ export class Watcher {
   async start(): Promise<void> {
     this.watcher = Deno.watchFs(this.root, { recursive: true });
     this.watchLoop();
+    await Promise.resolve();
   }
 
   async stop(): Promise<void> {
     this.watcher?.close();
     this.watcher = null;
+    await Promise.resolve();
   }
 
   private async watchLoop(): Promise<void> {

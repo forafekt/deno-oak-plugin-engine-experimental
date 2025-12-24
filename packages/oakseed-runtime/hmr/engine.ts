@@ -27,7 +27,8 @@ export class HMREngineImpl implements HMREngine {
   }
 
   async start(): Promise<void> {
-    console.log(`[HMR] Server listening on ws://localhost:${this.config.hmr.port}`);
+    console.log(`[HMR] Server listening on ws://${this.config.hmr.host}:${this.config.hmr.port}`);
+    await Promise.resolve();
   }
 
   async stop(): Promise<void> {
@@ -35,6 +36,7 @@ export class HMREngineImpl implements HMREngine {
       client.close();
     }
     this.clients.clear();
+    await Promise.resolve();
   }
 
   handleWebSocket(req: Request): Response {
@@ -104,6 +106,7 @@ export class HMREngineImpl implements HMREngine {
         timestamp: Date.now(),
         modules: affected,
         read: () => Deno.readTextFile(changedPath),
+        engine: this,
       };
       await this.pluginManager.runHook("handleHotUpdate", ctx);
 
@@ -147,6 +150,17 @@ export class HMREngineImpl implements HMREngine {
   private extractUpdates(result: any, affected: Set<string>): HMRUpdate[] {
     const updates: HMRUpdate[] = [];
 
+
+    // for (const path of affected) {
+    //   try {
+    //     const output = result.outputs.find((output: any) => output.path === path);
+    //     if (!output) continue;
+        
+    //   } catch (err) {
+    //     console.error(`[HMR] Error extracting updates for ${path}:`, err);
+    //   }
+    // }
+
     // Extract updated code from build outputs
     for (const output of result.outputs ?? []) {
       const text = new TextDecoder().decode(output.contents);
@@ -162,7 +176,7 @@ export class HMREngineImpl implements HMREngine {
     return updates;
   }
 
-  private broadcast(message: HMRMessage): void {
+  public broadcast(message: HMRMessage): void {
     const payload = encodeMessage(message);
     
     for (const client of this.clients) {

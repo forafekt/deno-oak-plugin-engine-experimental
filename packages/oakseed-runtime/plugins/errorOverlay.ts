@@ -64,16 +64,16 @@ export function errorOverlayPlugin(): RuntimePlugin {
 
     handleHotUpdate(ctx) {
       // Push error or clear event to client
-      //   if (lastError) {
-      //     ctx.server.broadcast({
-      //       type: "error",
-      //       error: lastError,
-      //     });
-      //   } else {
-      //     ctx.server.broadcast({
-      //       type: "error-clear",
-      //     });
-      //   }
+        if (lastError) {
+          ctx.engine.broadcast({
+            type: "error",
+            error: lastError,
+          });
+        } else {
+          ctx.engine.broadcast({
+            type: "error-clear",
+          });
+        }
     },
   };
 }
@@ -101,7 +101,7 @@ function createOverlay(message, stack) {
     <h2>⚠ Build Error</h2>
     <pre>\${message}</pre>
     <pre style="color:#aaa">\${stack || ""}</pre>
-    <button style="
+    <button id="error-overlay-dismiss" style="
       margin-top:16px;
       padding:8px 12px;
       background:#222;
@@ -109,9 +109,27 @@ function createOverlay(message, stack) {
       border:1px solid #555;
       cursor:pointer;
     ">Dismiss</button>
+    <button id="error-overlay-reload" style="
+      margin-top:16px;
+      padding:8px 12px;
+      background:#222;
+      color:white;
+      border:1px solid #555;
+      cursor:pointer;
+    ">Reload page</button>
+    <button id="error-overlay-ask-ai" style="
+      margin-top:16px;
+      padding:8px 12px;
+      background:#222;
+      color:white;
+      border:1px solid #555;
+      cursor:pointer;
+    ">Ask AI</button>
   \`;
 
-  overlay.querySelector("button").onclick = removeOverlay;
+  overlay.querySelector("#error-overlay-dismiss").onclick = removeOverlay;
+  overlay.querySelector("#error-overlay-reload").onclick = () => location.reload();
+  overlay.querySelector("#error-overlay-ask-ai").onclick = () => askAI(message);
   document.body.appendChild(overlay);
 }
 
@@ -121,10 +139,14 @@ function removeOverlay() {
     overlay = null;
   }
 }
-// createOverlay(new Error("TEst").message, new Error("TEst").stack);
+
+function askAI(message) {
+    window.open("https://chat.openai.com/?q=" + encodeURIComponent(message), "_blank");
+}
+
 // HMR connection (assumes your runtime exposes this)
 if (globalThis.__hmr) {
-  globalThis.__hmr.addEventListener("message", (e) => {
+  globalThis.__hmr.on("message", (e) => {
     const payload = JSON.parse(e.data);
 
     if (payload.type === "error") {

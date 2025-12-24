@@ -1,5 +1,5 @@
 // runtime/core/resolver.ts
-import * as esbuild from "@oakseed/x/esbuild.ts";
+import type * as esbuild from "@oakseed/x/esbuild.ts";
 
 export interface ResolverOptions {
   root: string;
