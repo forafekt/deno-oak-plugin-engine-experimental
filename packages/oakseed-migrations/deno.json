@@ -1,0 +1,8 @@
+{
+  "name": "@oakseed/migrations",
+  "version": "0.1.0",
+  "description": "Migrations interface for Oakseed engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

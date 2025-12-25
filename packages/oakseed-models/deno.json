@@ -1,0 +1,8 @@
+{
+  "name": "@oakseed/models",
+  "version": "0.1.0",
+  "description": "Models interface for Oakseed engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

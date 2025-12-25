@@ -126,6 +126,23 @@ export class OakSeedRouter {
           }
         }
 
+        // set x-oakseed-tenant header
+        if (tenant) {
+          ctx.response.headers.set("x-tenant-id", tenant.id);
+
+          // store tenant cookie
+          ctx.cookies.set("tenant", tenant);
+
+          // store tenant in sessions
+          if (ctx.state.session) {
+            if ('set' in ctx.state.session) {
+              ctx.state.session.set("tenant", tenant);
+            } else {
+              ctx.state.session.tenant = tenant;
+            }
+          }
+        }
+
         // Set tenant and container in context state
         ctx.state.tenant = tenant;
         ctx.state.container = container;
