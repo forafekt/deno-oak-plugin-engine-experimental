@@ -6,7 +6,7 @@
 
 import type { Context, Middleware } from "@oakseed/x/oak.ts";
 import type { LoggerOptions } from "@oakseed/logger/mod.ts";
-import { Tenant, TenantResolver, Plugin } from "@oakseed/engine/mod.ts";
+import { Tenant, TenantResolver, Plugin } from "@oakseed/oak-engine/mod.ts";
 import { Container } from "@oakseed/di/mod.ts";
 
 /**

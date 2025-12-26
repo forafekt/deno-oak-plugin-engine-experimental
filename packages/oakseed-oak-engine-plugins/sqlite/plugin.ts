@@ -4,9 +4,12 @@
  * Provides SQLite database connectivity for tenants
  */
 
-import { TenantManager } from "@oakseed/engine/mod.ts";
-import type { Container, Plugin, PluginConfig, Tenant, DatabaseDriver, EventEmitter, Logger } from "@oakseed/engine/mod.ts";
+import { Plugin, PluginConfig, Tenant, TenantManager } from "@oakseed/oak-engine/mod.ts";
 import { SQLiteDriver } from "./driver.ts";
+import { Container } from "@oakseed/di/mod.ts";
+import { Logger } from "@oakseed/logger";
+import { DatabaseDriver } from "@oakseed/types";
+import { EventEmitter } from "@oakseed/events";
 
 export const SQLitePlugin: Plugin = {
   name: "sqlite",

@@ -25,8 +25,11 @@ import { createLogger, type Logger } from "@oakseed/logger/mod.ts";
 import { createEventEmitter, type EventEmitter } from "@oakseed/events/mod.ts";
 import type { BootstrapOptions, OakSeedConfig } from "@oakseed/types/mod.ts";
 import { bootstrapConfigParser } from "@oakseed/utils/mod.ts";
+import type { OakSeedEngine } from "@oakseed/engine-core/engine.ts";
 
-export class OakSeedKernel {
+export class OakSeedKernel implements OakSeedEngine {
+  name = "oak-engine";
+
   private app: Application;
   private container: Container;
   private logger: Logger;
@@ -368,18 +371,18 @@ export class OakSeedKernel {
     const { hostname, port } = this.config;
 
     await this.app.listen({ hostname, port, ...options });
-    await this.close();
   }
 
   /**
    * Shutdown the kernel
    */
-  private async shutdown(): Promise<void> {
+  async shutdown(): Promise<void> {
     this.logger.info("Shutting down OakSeed kernel...");
 
     await this.pluginManager.shutdown(this.container);
 
-    this.logger.info("Kernel shut down");
+    Deno.addSignalListener("SIGINT", this._shutdown);
+    Deno.addSignalListener("SIGTERM", this._shutdown);
   }
 
   // Graceful shutdown
@@ -391,11 +394,10 @@ export class OakSeedKernel {
     Deno.exit(0);
   }
 
-  private async close() {
-    Deno.addSignalListener("SIGINT", this._shutdown);
-    Deno.addSignalListener("SIGTERM", this._shutdown);
-    await Promise.resolve();
+  getRouter(): OakSeedRouter {
+    return this.router;
   }
+
 
   /**
    * Get container

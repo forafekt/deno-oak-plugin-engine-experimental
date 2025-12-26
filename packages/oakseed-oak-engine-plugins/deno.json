@@ -1,5 +1,5 @@
 {
-  "name": "@oakseed/plugins",
+  "name": "@oakseed/oak-engine-plugins",
   "exports": {
     "./mod.ts": "./mod.ts"
   },

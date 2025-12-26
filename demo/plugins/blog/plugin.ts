@@ -4,9 +4,11 @@
  * Complete blog implementation with markdown support
  */
 
-import { Plugin, Container, PluginConfig, ViewEngine, Logger, EventEmitter, DatabaseDriver, WorkerManager } from "@oakseed/engine/mod.ts";
-
-
+import { Plugin, PluginConfig, ViewEngine, WorkerManager } from "@oakseed/oak-engine/mod.ts";
+import { Container } from "@oakseed/di/mod.ts";
+import { Logger } from "@oakseed/logger";
+import { EventEmitter } from "@oakseed/events";
+import { DatabaseDriver } from "@oakseed/types";
 
 export const BlogPlugin: Plugin = {
   name: "blog",
@@ -83,7 +85,7 @@ export const BlogPlugin: Plugin = {
       tenant: true,
       handler: async (ctx, container) => {
         const blog = container.resolve<BlogService>("blog");
-        const body = await ctx.request.body({ type: "json" }).value;
+        const body = await ctx.request.body.json()
 
         // Validate input
         if (!body.title || !body.markdown) {

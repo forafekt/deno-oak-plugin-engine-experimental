@@ -6,13 +6,13 @@
 
 import {
   Plugin,
-  Container,
   PluginConfig,
   ViewEngine,
-  Logger,
-  EventEmitter,
   TenantManager
-} from "@oakseed/engine/mod.ts";
+} from "@oakseed/oak-engine/mod.ts";
+import { Container } from "@oakseed/di/mod.ts";
+import { EventEmitter } from "@oakseed/events";
+import { Logger } from "@oakseed/logger";
 
 export const DashboardPlugin: Plugin = {
   name: "dashboard",

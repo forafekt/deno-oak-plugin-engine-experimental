@@ -1,5 +1,5 @@
-import { ConfigLoader, corsMiddleware, debugMiddleware } from "@oakseed/engine/mod.ts";
-import { DashboardPlugin, MySQLPlugin, SQLitePlugin, DenoKVPlugin, FileSystemRouterPlugin } from "@oakseed/plugins/mod.ts";
+import { ConfigLoader } from "@oakseed/config/mod.ts";
+import { DashboardPlugin, MySQLPlugin, SQLitePlugin, DenoKVPlugin, FileSystemRouterPlugin } from "@oakseed/oak-engine-plugins/mod.ts";
 import { BlogPlugin } from "./plugins/blog/plugin.ts";
 import { AnalyticsPlugin } from "./plugins/analytics/plugin.ts";
 
@@ -16,7 +16,7 @@ export default ConfigLoader.defineConfig({
     logger: { level: Deno.env.get("LOG_LEVEL") || "info", useColors: true },
     viewPaths: ["./views"],
     assetPaths: ["./public"],
-    pluginPaths: ["./plugins", "../packages/oakseed-engine/plugins"],
+    pluginPaths: ["./plugins", "../packages/oakseed-oak-engine-plugins"],
     debug: DEBUG,
   },
   plugins: [
@@ -29,8 +29,8 @@ export default ConfigLoader.defineConfig({
     AnalyticsPlugin,
   ],
   tenantsFile: "./tenants.json",
-  middleware: [
-    corsMiddleware({ origin: "*" }), 
-    debugMiddleware({ debug: DEBUG }),
-  ],
+  // middleware: [
+  //   // corsMiddleware({ origin: "*" }), 
+  //   // debugMiddleware({ debug: DEBUG }),
+  // ],
 });

@@ -4,10 +4,11 @@
  */
 
 import { Client } from "@oakseed/x/mysql.ts";
-import { parseConnectionString } from "@oakseed/engine/mod.ts";
-import type { DatabaseDriver, Logger } from "@oakseed/engine/mod.ts";
 
 import { MultiTenantEngine, engineBuilder } from "@oakseed/database-engine/mod.ts"
+import { DatabaseDriver } from "@oakseed/types";
+import { Logger } from "@oakseed/logger";
+import { parseConnectionString } from "@oakseed/utils";
 
 export class MySQLDriver implements DatabaseDriver {
   private client: Client;

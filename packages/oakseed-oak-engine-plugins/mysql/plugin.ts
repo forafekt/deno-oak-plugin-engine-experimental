@@ -4,9 +4,13 @@
  * Provides MySQL database connectivity for tenants
  */
 
-import { TenantManager } from "@oakseed/engine/mod.ts";
-import type { Container, Plugin, PluginConfig, Tenant, DatabaseDriver, EventEmitter, Logger } from "@oakseed/engine/mod.ts";
+import { TenantManager } from "@oakseed/oak-engine/mod.ts";
+import type { Plugin, PluginConfig, Tenant} from "@oakseed/oak-engine/mod.ts";
 import { MySQLDriver } from "./driver.ts";
+import { Container } from "@oakseed/di/mod.ts";
+import { EventEmitter } from "@oakseed/events";
+import { Logger } from "@oakseed/logger";
+import { DatabaseDriver } from "@oakseed/types";
 
 export const MySQLPlugin: Plugin = {
   name: "mysql",

@@ -4,7 +4,10 @@
  * Provides event tracking and analytics
  */
 
-import { Plugin, Container, PluginConfig, Logger, WorkerManager, CacheDriver, DatabaseDriver } from "@oakseed/engine/mod.ts";
+import { Plugin, PluginConfig, WorkerManager} from "@oakseed/oak-engine/mod.ts";
+import { Container } from "@oakseed/di/mod.ts";
+import { Logger } from "@oakseed/logger";
+import { CacheDriver, DatabaseDriver } from "@oakseed/types";
 
 export const AnalyticsPlugin: Plugin = {
   name: "analytics",
@@ -29,7 +32,7 @@ export const AnalyticsPlugin: Plugin = {
       tenant: true,
       handler: async (ctx, container) => {
         const analytics = await container.resolveAsync<AnalyticsService>("analytics");
-        const body = await ctx.request.body({ type: "json" }).value;
+        const body = await ctx.request.body.json()
 
         // Dispatch tracking worker
         const workers = container.resolve<WorkerManager>("workers");

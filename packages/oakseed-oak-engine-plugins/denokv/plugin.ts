@@ -4,9 +4,13 @@
  * Provides Deno KV for database and cache functionality
  */
 
-import { TenantManager } from "@oakseed/engine/mod.ts";
-import type { Plugin, Container, PluginConfig, Logger, Tenant, DatabaseDriver, CacheDriver, EventEmitter } from "@oakseed/engine/mod.ts";
+import { TenantManager } from "@oakseed/oak-engine/mod.ts";
+import type { Plugin, PluginConfig, Tenant } from "@oakseed/oak-engine/mod.ts";
+import { Container } from "@oakseed/di/mod.ts";
+import { Logger } from "@oakseed/logger/mod.ts";
+import { EventEmitter } from "@oakseed/events/mod.ts";
 import { DenoKVDriver } from "./driver.ts";
+import { CacheDriver, DatabaseDriver } from "@oakseed/types";
 
 export const DenoKVPlugin: Plugin = {
   name: "denokv",

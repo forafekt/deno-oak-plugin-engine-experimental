@@ -6,13 +6,13 @@
 
 import { send } from "@oakseed/x/oak.ts";
 import { join } from "@oakseed/x/std/path.ts";
-import {
-  Plugin,
-  Container,
-  PluginConfig,
-  EventEmitter,
-  Logger,
-} from "@oakseed/engine/mod.ts";
+  import {
+    Plugin,
+    PluginConfig,
+  } from "@oakseed/oak-engine/mod.ts";
+  import { Container } from "@oakseed/di/mod.ts";
+  import { EventEmitter } from "@oakseed/events";
+  import { Logger } from "@oakseed/logger";
 
 export const FileSystemRouterPlugin: Plugin = {
   name: "fileSystemRouter",

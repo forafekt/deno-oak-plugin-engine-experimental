@@ -4,7 +4,8 @@
  */
 
 import { DB } from "@oakseed/x/sqlite.ts";
-import type { Logger, DatabaseDriver } from "@oakseed/engine/mod.ts";
+import type { DatabaseDriver } from "@oakseed/types";
+import { Logger } from "@oakseed/logger";
 
 export class SQLiteDriver implements DatabaseDriver {
   private db: DB | null = null;

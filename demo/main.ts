@@ -4,30 +4,22 @@
  * Demonstrates proper tenant routing setup with debugging
  */
 
-import { bootstrap, OakSeedRouter, Logger, PluginManager, TenantManager, ViewEngine, WorkerManager } from "@oakseed/engine/mod.ts";
+import { bootstrap, ViewEngine } from "@oakseed/oak-engine/mod.ts";
 
-
-// Bootstrap the engine
-// console.log("\n🚀 Bootstrapping OakSeed Engine...\n");
 
 const engine = await bootstrap();
 
-// engine.getContainer().resolve<OakSeedRouter>("router").printRoutes();
 
 // Get services
-const container = engine.getContainer();
-const router = container.resolve<OakSeedRouter>("router");
-const tenantManager = container.resolve<TenantManager>("tenantManager");
+const router = engine.getRouter();
 
-// Add custom global routes
-// console.log("📝 Registering custom routes...\n");
 
 router.register({
   method: "GET",
   path: "/",
   tenant: false,
   name: "home",
-  handler: async (ctx) => {
+  handler: async (ctx, container) => {
     const views = container.resolve<ViewEngine>("views");
     const html = await views.render("home", {
       title: "OakSeed Engine",
