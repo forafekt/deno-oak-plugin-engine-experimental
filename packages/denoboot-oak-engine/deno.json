@@ -1,0 +1,8 @@
+{
+  "name": "@denoboot/oak",
+  "version": "0.1.0",
+  "description": "An engine for Deno Oak based on DenoBoot",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

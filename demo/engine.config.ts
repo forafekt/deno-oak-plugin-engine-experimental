@@ -1,5 +1,5 @@
-import { ConfigLoader } from "@oakseed/config/mod.ts";
-import { DashboardPlugin, MySQLPlugin, SQLitePlugin, DenoKVPlugin, FileSystemRouterPlugin } from "@oakseed/oak-engine-plugins/mod.ts";
+import { ConfigLoader } from "@denoboot/config/mod.ts";
+import { DashboardPlugin, MySQLPlugin, SQLitePlugin, DenoKVPlugin, FileSystemRouterPlugin } from "@denoboot/oak-plugins/mod.ts";
 import { BlogPlugin } from "./plugins/blog/plugin.ts";
 import { AnalyticsPlugin } from "./plugins/analytics/plugin.ts";
 

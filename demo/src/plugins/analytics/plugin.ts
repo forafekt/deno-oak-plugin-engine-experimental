@@ -4,7 +4,7 @@
  * Provides event tracking and analytics
  */
 
-import { Plugin, Container, PluginConfig, Logger, WorkerManager, CacheDriver, DatabaseDriver } from "@oakseed/engine/mod.ts";
+import { Plugin, Container, PluginConfig, Logger, WorkerManager, CacheDriver, DatabaseDriver } from "@denoboot/engine/mod.ts";
 
 export const AnalyticsPlugin: Plugin = {
   name: "analytics",

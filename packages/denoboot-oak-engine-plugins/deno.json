@@ -1,0 +1,9 @@
+{
+  "name": "@denoboot/oak-plugins",
+  "exports": {
+    "./mod.ts": "./mod.ts"
+  },
+  "tasks": {
+    "dev": "deno run --watch main.ts"
+  }
+}

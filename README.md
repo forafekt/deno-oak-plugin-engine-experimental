@@ -1,18 +1,18 @@
-# OakSeed Engine (OSE)
+# Deno Boot Engine (OSE)
 
-![OakSeed Logo](image.png)
+![Deno Boot Logo](image.png)
 
 > **⚠️ Status: Early Development / Unstable**
 >
-> OakSeed Engine is **actively under development**. APIs, behavior, naming, and internal architecture may change **frequently and without notice**. Do **not** rely on OakSeed Engine for production use at this stage.
+> Deno Boot Engine is **actively under development**. APIs, behavior, naming, and internal architecture may change **frequently and without notice**. Do **not** rely on Deno Boot Engine for production use at this stage.
 
 ---
 
 ## Overview
 
-**OakSeed Engine (OSE)** is an experimental, modular **plugin engine built on top of Deno and Oak**, designed to provide a clean, extensible foundation for building multi-tenant, plugin-driven web applications.
+**Deno Boot Engine (OSE)** is an experimental, modular **plugin engine built on top of Deno and Oak**, designed to provide a clean, extensible foundation for building multi-tenant, plugin-driven web applications.
 
-The core idea behind OakSeed is simple:
+The core idea behind Deno Boot is simple:
 
 > 🌱 *Plant a small, composable seed — let functionality grow through plugins.*
 
@@ -29,7 +29,7 @@ This project is part of ongoing exploration into **runtime composition**, **deve
 
 ## Goals
 
-OakSeed Engine is being built with the following goals in mind:
+Deno Boot Engine is being built with the following goals in mind:
 
 * **Plugin-first architecture**
 * **Deno-native** (no Node.js compatibility layer)
@@ -43,7 +43,7 @@ OakSeed Engine is being built with the following goals in mind:
 
 ## Non-Goals (For Now)
 
-To keep scope realistic, OakSeed Engine intentionally does **not** aim to be:
+To keep scope realistic, Deno Boot Engine intentionally does **not** aim to be:
 
 * A full framework replacement (e.g. Next.js, NestJS)
 * Stable or production-ready (yet)
@@ -54,7 +54,7 @@ To keep scope realistic, OakSeed Engine intentionally does **not** aim to be:
 
 ## Architecture (High-Level)
 
-While the internals are evolving, OakSeed Engine roughly consists of:
+While the internals are evolving, Deno Boot Engine roughly consists of:
 
 * **Core Engine**
 
@@ -85,14 +85,14 @@ Expect this structure to shift as the engine matures.
 ## Example (Conceptual)
 
 ```ts
-import { definePlugin } from "@oakseed/engine";
+import { definePlugin } from "@denoboot/engine";
 
 export default definePlugin({
   name: "example-plugin",
 
   setup({ router, events }) {
     router.get("/hello", (ctx) => {
-      ctx.response.body = "Hello from OakSeed";
+      ctx.response.body = "Hello from Deno Boot";
     });
 
     events.on("engine:ready", () => {
@@ -113,13 +113,13 @@ export default definePlugin({
 * 🚧 Breaking changes are **expected**
 * 🚧 Internal refactors happen often
 
-If you are using OakSeed Engine right now, you are an **early explorer**, not an end user.
+If you are using Deno Boot Engine right now, you are an **early explorer**, not an end user.
 
 ---
 
 ## Who Is This For?
 
-OakSeed Engine is currently best suited for:
+Deno Boot Engine is currently best suited for:
 
 * Developers experimenting with **plugin architectures**
 * Learning projects around **Deno + Oak**
@@ -157,7 +157,7 @@ License to be defined.
 
 ## Final Note
 
-OakSeed Engine is an experiment.
+Deno Boot Engine is an experiment.
 
 If it grows into something solid — great.
 If it teaches useful lessons — even better.

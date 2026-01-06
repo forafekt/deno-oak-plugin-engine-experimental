@@ -1,4 +1,4 @@
-import { defineRuntimeConfig } from "@oakseed/runtime";
+import { defineRuntimeConfig } from "@denoboot/runtime";
 
 export default defineRuntimeConfig({
   root: Deno.cwd(),

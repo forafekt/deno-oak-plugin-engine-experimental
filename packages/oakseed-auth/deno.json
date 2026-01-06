@@ -1,8 +1,0 @@
-{
-  "name": "@oakseed/auth",
-  "version": "0.1.0",
-  "description": "Authentication interface for Oakseed engine",
-  "exports": {
-    ".": "./mod.ts"
-  }
-}

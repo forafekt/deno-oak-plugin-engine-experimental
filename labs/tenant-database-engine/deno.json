@@ -1,5 +1,5 @@
 {
-  "name": "@oakseed/database-engine",
+  "name": "@denoboot/database-engine",
   "version": "0.1.0",
   "description": "A modular multi-tenant engine with background workers for Deno",
   "exports": {

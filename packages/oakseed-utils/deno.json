@@ -1,8 +1,0 @@
-{
-  "name": "@oakseed/utils",
-  "version": "0.1.0",
-  "description": "Utility functions for Oakseed engine",
-  "exports": {
-    ".": "./mod.ts"
-  }
-}

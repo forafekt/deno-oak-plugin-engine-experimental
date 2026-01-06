@@ -1,0 +1,8 @@
+{
+  "name": "@denoboot/models",
+  "version": "0.1.0",
+  "description": "Models interface for DenoBoot engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

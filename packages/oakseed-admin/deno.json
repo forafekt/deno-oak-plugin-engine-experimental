@@ -1,8 +1,0 @@
-{
-  "name": "@oakseed/admin",
-  "version": "0.1.0",
-  "description": "Admin interface for Oakseed engine",
-  "exports": {
-    ".": "./mod.ts"
-  }
-}

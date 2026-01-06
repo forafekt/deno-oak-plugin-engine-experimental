@@ -1,0 +1,8 @@
+{
+  "name": "@denoboot/runtime",
+  "version": "0.1.0",
+  "description": "Runtime environment for DenoBoot engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

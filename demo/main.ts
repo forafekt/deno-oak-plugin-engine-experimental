@@ -1,6 +1,6 @@
 // demo/main.ts
 
-import { oakEngine } from "@oakseed/oak-engine/mod.ts";
+import { oakEngine } from "@denoboot/oak";
 
 const engine = await oakEngine();
 const router = engine.getRouter();
@@ -14,7 +14,7 @@ router.register({
     return async (ctx, _next) => {
     const views = kwargs.container.resolve("views");
     const html = await views.render("home", {
-      title: "OakSeed Engine",
+      title: "Deno Boot Engine",
       description: "Multi-tenant plugin framework for Deno",
     });
     ctx.response.type = "text/html";

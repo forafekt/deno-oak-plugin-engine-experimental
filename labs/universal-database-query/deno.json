@@ -1,5 +1,5 @@
 {
-  "name": "@oakseed/database-query",
+  "name": "@denoboot/database-query",
   "version": "0.1.0",
   "description": "A universal database query builder for Deno",
   "exports": {

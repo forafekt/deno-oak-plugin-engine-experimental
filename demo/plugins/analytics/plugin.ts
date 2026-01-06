@@ -4,10 +4,10 @@
  * Provides event tracking and analytics
  */
 
-import { Container } from "@oakseed/di/mod.ts";
-import { Logger } from "@oakseed/logger";
-import { CacheDriver, DatabaseDriver } from "@oakseed/types";
-import { defineOakPlugin } from "@oakseed/oak-engine";
+import { Container } from "@denoboot/di/mod.ts";
+import { Logger } from "@denoboot/logger";
+import { CacheDriver, DatabaseDriver } from "@denoboot/types";
+import { defineOakPlugin } from "@denoboot/oak";
 
 export const AnalyticsPlugin = defineOakPlugin({
   name: "analytics",

@@ -1,0 +1,8 @@
+{
+  "name": "@denoboot/sessions",
+  "version": "0.1.0",
+  "description": "Sessions interface for DenoBoot engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

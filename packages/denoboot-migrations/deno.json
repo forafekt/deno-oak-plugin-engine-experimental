@@ -1,0 +1,8 @@
+{
+  "name": "@denoboot/migrations",
+  "version": "0.1.0",
+  "description": "Migrations interface for DenoBoot engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

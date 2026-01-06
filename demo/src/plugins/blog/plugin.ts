@@ -4,7 +4,7 @@
  * Complete blog implementation with markdown support
  */
 
-import { Plugin, Container, PluginConfig, ViewEngine, Logger, EventEmitter, DatabaseDriver, WorkerManager } from "@oakseed/engine/mod.ts";
+import { Plugin, Container, PluginConfig, ViewEngine, Logger, EventEmitter, DatabaseDriver, WorkerManager } from "@denoboot/engine/mod.ts";
 
 
 

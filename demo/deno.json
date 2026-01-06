@@ -3,9 +3,9 @@
     "start": "deno run --allow-net --allow-read --allow-write --allow-env --unstable main.ts",
     "dev": "deno run --allow-all --watch main.ts",
     "test": "deno test --allow-net --allow-read --allow-write --allow-env --unstable",
-    "runtime:dev": "cd app && deno run --allow-all @oakseed/runtime/cli/cli.ts dev",
-    "runtime:build": "cd app && deno run --allow-all @oakseed/runtime/cli/cli.ts build",
-    "runtime:preview": "cd app && deno run --allow-all @oakseed/runtime/cli/cli.ts preview"
+    "runtime:dev": "cd app && deno run --allow-all @denoboot/runtime/cli/cli.ts dev",
+    "runtime:build": "cd app && deno run --allow-all @denoboot/runtime/cli/cli.ts build",
+    "runtime:preview": "cd app && deno run --allow-all @denoboot/runtime/cli/cli.ts preview"
   },
   "compilerOptions": {
     "lib": ["deno.window", "deno.unstable", "deno.worker", "dom", "dom.iterable", "dom.asynciterable", "esnext"],

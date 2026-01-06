@@ -1,5 +1,5 @@
 // adapters/mysql.ts
-import { Client } from "@oakseed/x/mysql.ts";
+import { Client } from "@denoboot/x/mysql.ts";
 import type {
   DataAccess,
   DatabaseAdapter,

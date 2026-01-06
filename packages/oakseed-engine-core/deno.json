@@ -1,8 +1,0 @@
-{
-  "name": "@oakseed/engine-core",
-  "version": "0.1.0",
-  "description": "Core engine contract for OakSeed",
-  "exports": {
-    ".": "./engine.ts"
-  }
-}

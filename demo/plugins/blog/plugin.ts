@@ -4,19 +4,20 @@
  * Complete blog implementation with markdown support
  */
 
-import { Plugin, PluginConfig, ViewEngine, WorkerManager } from "@oakseed/oak-engine/mod.ts";
-import { Container } from "@oakseed/di/mod.ts";
-import { Logger } from "@oakseed/logger";
-import { EventEmitter } from "@oakseed/events";
-import { DatabaseDriver } from "@oakseed/types";
+import { Container } from "@denoboot/di/mod.ts";
+import { Logger } from "@denoboot/logger";
+import { EventEmitter } from "@denoboot/events";
+import { DatabaseDriver } from "@denoboot/types";
+import { defineOakPlugin } from "@denoboot/oak";
+import { WorkerManager } from "@denoboot/engine-core/worker_manager.ts";
 
-export const BlogPlugin: Plugin = {
+export const BlogPlugin = defineOakPlugin({
   name: "blog",
   version: "1.0.0",
   description: "Blog plugin with markdown support and workers",
   type: 'client-server',
 
-  async init(container: Container, config: PluginConfig): Promise<void> {
+  async init(container, config): Promise<void> {
     const logger = container.resolve<Logger>("logger");
     const events = container.resolve<EventEmitter>("events");
 
@@ -47,17 +48,20 @@ export const BlogPlugin: Plugin = {
       path: "/blog",
       tenant: false,
       name: "blog-list",
-      handler: async (ctx, container) => {
+      handler() {
+        return async (ctx) => {
         console.log(ctx.state.session?.tenant);
         // ctx.response.redirect('/tenant/tenant1/blog');
         ctx.response.body = {}
+      }
       },
     },
     {
       method: "GET",
       path: "/blog/:slug",
       tenant: true,
-      handler: async (ctx, container) => {
+      handler({ container }) {
+        return async (ctx) => {
         const blog = container.resolve<BlogService>("blog");
         const post = await blog.getPost(ctx.params.slug!);
 
@@ -67,7 +71,7 @@ export const BlogPlugin: Plugin = {
         //   return;
         // }
 
-        const views = container.resolve<ViewEngine>("views");
+        const views = container.resolve("views");
         const html = await views.render("blog/post", {
           post: post || {},
           tenant: ctx.state.tenant,
@@ -77,13 +81,15 @@ export const BlogPlugin: Plugin = {
 
         ctx.response.type = "text/html";
         ctx.response.body = html;
+      }
       },
     },
     {
       method: "POST",
       path: "/api/blog/posts",
       tenant: true,
-      handler: async (ctx, container) => {
+      handler({ container }) {
+        return async (ctx) => {
         const blog = container.resolve<BlogService>("blog");
         const body = await ctx.request.body.json()
 
@@ -102,7 +108,7 @@ export const BlogPlugin: Plugin = {
           "blog",
           "process-markdown",
           {
-            tenantId: ctx.state.tenant.id,
+            tenantId: ctx.state?.tenant?.id,
             data: body,
           },
           container.getParent() || container
@@ -131,16 +137,19 @@ export const BlogPlugin: Plugin = {
             message: (error as Error).message,
           };
         }
+      }
       },
     },
     {
       method: "DELETE",
       path: "/api/blog/posts/:slug",
       tenant: true,
-      handler: async (ctx, container) => {
+      handler({ container }) {
+       return async (ctx) => {
         const blog = container.resolve<BlogService>("blog");
         await blog.deletePost(ctx.params.slug!);
         ctx.response.body = { success: true };
+      }
       },
     },
     {
@@ -148,10 +157,11 @@ export const BlogPlugin: Plugin = {
       path: "/tenant/:tenantId/blog",
       tenant: true,
       name: "tenant-blog-list",
-      handler: async (ctx, container) => {
+      handler({container}) {
+        return async (ctx) => {
          const blog = container.resolve<BlogService>("blog");
         const posts = await blog.listPosts();
-        const views = container.resolve<ViewEngine>("views");
+        const views = container.resolve("views");
 
         const html = await views.render("blog/list", {
           posts,
@@ -162,6 +172,7 @@ export const BlogPlugin: Plugin = {
 
         ctx.response.type = "text/html";
         ctx.response.body = html;
+      }
       },
     },
   ],
@@ -188,7 +199,7 @@ export const BlogPlugin: Plugin = {
   ],
 
   viewPaths: ["./views"],
-};
+});
 
 /**
  * Simple markdown to HTML converter

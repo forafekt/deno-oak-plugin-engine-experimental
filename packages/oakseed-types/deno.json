@@ -1,8 +1,0 @@
-{
-  "name": "@oakseed/types",
-  "version": "0.1.0",
-  "description": "Type definitions for Oakseed engine",
-  "exports": {
-    ".": "./mod.ts"
-  }
-}

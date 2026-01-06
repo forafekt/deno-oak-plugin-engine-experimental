@@ -1,0 +1,8 @@
+{
+  "name": "@denoboot/di",
+  "version": "0.1.0",
+  "description": "Dependency Injection for DenoBoot",
+  "exports": {
+    "./mod.ts": "./mod.ts"
+  }
+}

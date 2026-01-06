@@ -1,8 +1,0 @@
-{
-  "name": "@oakseed/events",
-  "version": "0.1.0",
-  "description": "Event system for Oakseed engine",
-  "exports": {
-    ".": "./mod.ts"
-  }
-}

@@ -1,0 +1,8 @@
+{
+  "name": "@denoboot/config",
+  "version": "0.1.0",
+  "description": "Configuration module for DenoBoot engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

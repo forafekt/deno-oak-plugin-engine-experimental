@@ -1,0 +1,8 @@
+{
+  "name": "@denoboot/types",
+  "version": "0.1.0",
+  "description": "Type definitions for DenoBoot engine",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}

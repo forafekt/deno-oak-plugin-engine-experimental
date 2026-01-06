@@ -1,8 +1,0 @@
-{
-  "name": "@oakseed/db",
-  "version": "0.1.0",
-  "description": "Database interface for Oakseed engine",
-  "exports": {
-    ".": "./mod.ts"
-  }
-}
