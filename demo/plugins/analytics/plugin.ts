@@ -4,18 +4,18 @@
  * Provides event tracking and analytics
  */
 
-import { Plugin, PluginConfig, WorkerManager} from "@oakseed/oak-engine/mod.ts";
 import { Container } from "@oakseed/di/mod.ts";
 import { Logger } from "@oakseed/logger";
 import { CacheDriver, DatabaseDriver } from "@oakseed/types";
+import { defineOakPlugin } from "@oakseed/oak-engine";
 
-export const AnalyticsPlugin: Plugin = {
+export const AnalyticsPlugin = defineOakPlugin({
   name: "analytics",
   version: "1.0.0",
   description: "Analytics and event tracking",
   type: 'server',
 
-  async init(container: Container, config: PluginConfig): Promise<void> {
+  async init(container, config) {
     const logger = container.resolve<Logger>("logger");
     logger.info("Initializing analytics plugin");
 
@@ -30,17 +30,18 @@ export const AnalyticsPlugin: Plugin = {
       method: "POST",
       path: "/api/analytics/track",
       tenant: true,
-      handler: async (ctx, container) => {
+      handler({ container }){
+        return async (ctx) => {
         const analytics = await container.resolveAsync<AnalyticsService>("analytics");
         const body = await ctx.request.body.json()
 
         // Dispatch tracking worker
-        const workers = container.resolve<WorkerManager>("workers");
+        const workers = container.resolve("workers");
         const jobId = await workers.dispatch(
           "analytics",
           "track-event",
           {
-            tenantId: ctx.state.tenant.id,
+            tenantId: ctx.state.tenant?.id,
             data: {
               ...body,
               timestamp: new Date().toISOString(),
@@ -55,29 +56,34 @@ export const AnalyticsPlugin: Plugin = {
           success: true,
           jobId,
         };
+      }
       },
     },
     {
       method: "GET",
       path: "/api/analytics/stats",
       tenant: true,
-      handler: async (ctx, container) => {
+      handler({ container }) {
+        return async (ctx) => {
         const analytics = await container.resolveAsync<AnalyticsService>("analytics");
         const stats = await analytics.getStats();
 
         ctx.response.body = stats;
+      }
       },
     },
     {
       method: "GET",
       path: "/api/analytics/events",
       tenant: true,
-      handler: async (ctx, container) => {
+      handler({ container }) {
+        return async (ctx) => {
         const analytics = await container.resolveAsync<AnalyticsService>("analytics");
         const limit = parseInt(ctx.request.url.searchParams.get("limit") || "100");
         const events = await analytics.getEvents(limit);
 
         ctx.response.body = { events };
+      }
       },
     },
   ],
@@ -125,7 +131,7 @@ export const AnalyticsPlugin: Plugin = {
       // Auto-track page views
       if (ctx.state.tenant && ctx.request.method === "GET") {
         const container = ctx.state.container;
-        const workers = container.resolve("workers") as WorkerManager;
+        const workers = container.resolve("workers");
 
         await workers.dispatch(
           "analytics",
@@ -145,7 +151,7 @@ export const AnalyticsPlugin: Plugin = {
       await next();
     },
   ],
-};
+});
 
 class AnalyticsService {
   private container: Container;

@@ -1,13 +1,8 @@
-// example-app/main.ts
-/**
- * Example OakSeed Application - FIXED VERSION
- * Demonstrates proper tenant routing setup with debugging
- */
+// demo/main.ts
 
 import { oakEngine } from "@oakseed/oak-engine/mod.ts";
 
 const engine = await oakEngine();
-
 const router = engine.getRouter();
 
 router.register({
@@ -24,7 +19,7 @@ router.register({
     });
     ctx.response.type = "text/html";
     ctx.response.body = html;
-  }
+    }
   },
 });
 

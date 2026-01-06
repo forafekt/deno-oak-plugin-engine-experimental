@@ -32,7 +32,8 @@ import { type OakSeedEnginePlugin as Plugin, type OakSeedPluginConfig as PluginC
 
 export interface OakEngineAppMiddleware<S extends Record<PropertyKey, any> = Record<string, any>> extends Middleware<S> {}
 
-export interface OakEngineContainer extends Container<{
+
+export type OakEngineInternalServices<T extends Record<string, unknown> = Record<string, unknown>> = {
     config: OakSeedConfig;
     logger: Logger;
     events: EventEmitter;
@@ -41,9 +42,9 @@ export interface OakEngineContainer extends Container<{
     workers: WorkerManager;
     views: ViewEngine;
     router: OakRouter;
-  } & {
-    [key: string]: any;
-  }> {
+  } & T;
+
+export interface OakEngineContainer<T extends Record<string, unknown> = Record<string, unknown>> extends Container<OakEngineInternalServices<T>> {
   // Add any Oak-specific container properties here if needed
 }
 
@@ -487,14 +488,14 @@ export class OakKernel<AS extends Record<PropertyKey, any> = Record<string, any>
  * @default options = 'engine.config.ts'
  * @returns {Promise<OakSeedKernel>}
  */
-export async function oakEngine(
+export async function oakEngine<AS extends Record<PropertyKey, any> = Record<string, any>>(
   /**
    * Configuration options or path to config file
    *
    * @default 'engine.config.ts'
    */
   options: BootstrapOptions | string = "engine.config.ts"
-): Promise<OakKernel> {
+): Promise<OakKernel<AS>> {
   const cfg = await bootstrapConfigParser(options);
 
   const logger = createLogger(cfg.config?.logger);
@@ -503,7 +504,7 @@ export async function oakEngine(
   ConfigLoader.validate(cfg.config);
 
   // Create kernel
-  const kernel = new OakKernel(cfg.config);
+  const kernel = new OakKernel<AS>(cfg.config);
 
   // Use custom container if provided
   if (cfg.container) {

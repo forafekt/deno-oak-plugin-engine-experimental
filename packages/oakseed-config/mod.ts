@@ -8,7 +8,8 @@
 
 import type { OakSeedConfig, DefineConfig } from "@oakseed/types/mod.ts";
 import { deepMerge, fileExists, loadJSON } from "@oakseed/utils/mod.ts";
-import type { Tenant } from "@oakseed/engine/mod.ts";
+import type { Tenant } from "@oakseed/engine-core/tenant_manager.ts";
+
 
 const DEFAULT_CONFIG: OakSeedConfig = {
   port: 8000,

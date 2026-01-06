@@ -6,7 +6,7 @@
 
 import type { Container } from "@oakseed/di/mod.ts";
 import type { Logger } from "@oakseed/logger/mod.ts";
-import { EventEmitter } from "@oakseed/events/mod.ts";
+import type { EventEmitter } from "@oakseed/events/mod.ts";
 
 /**
  * Worker definition

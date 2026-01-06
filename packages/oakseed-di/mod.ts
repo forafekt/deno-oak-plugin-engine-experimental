@@ -9,13 +9,13 @@
 export interface Container<Entries extends Record<string, unknown> = any> {
   // Service registration
   register<T>(name: string, instance: T): void;
-  registerFactory<T>(
+  registerFactory<T, E extends Entries = Entries>(
     name: string,
-    factory: (container: Container<Entries>) => T | Promise<T>
+    factory: (container: Container<E>) => T | Promise<T>
   ): void;
-  registerSingleton<T>(
+  registerSingleton<T, E extends Entries = Entries>(
     name: string,
-    factory: (container: Container<Entries>) => T | Promise<T>
+    factory: (container: Container<E>) => T | Promise<T>
   ): void;
   
   // Service resolution
@@ -61,7 +61,7 @@ export class DIContainer<Entries extends Record<string, unknown> = Record<string
   /**
    * Register a factory function (called each time)
    */
-  registerFactory<T, E extends Record<string, unknown> = Record<string, unknown>>(
+  registerFactory<T, E extends Entries = Entries>(
     name: string,
     factory: ServiceFactory<T, E>,
   ): void {
@@ -74,7 +74,7 @@ export class DIContainer<Entries extends Record<string, unknown> = Record<string
   /**
    * Register a singleton factory (called once, cached)
    */
-  registerSingleton<T, E extends Record<string, unknown> = Record<string, unknown>>(
+  registerSingleton<T, E extends Entries = Entries>(
     name: string,
     factory: ServiceFactory<T, E>
   ): void {
@@ -259,16 +259,3 @@ export class DIContainer<Entries extends Record<string, unknown> = Record<string
 export function createContainer<Entries extends Record<string, unknown> = Record<string, unknown>>(parent?: DIContainer<Entries>){
   return new DIContainer<Entries>(parent);
 }
-
-// export function createContainerTyped<Entries extends Record<string, unknown> = Record<string, unknown>>(parent?: Container): ContainerTyped<Entries> {
-//   return new DIContainer(parent) as ContainerTyped<Entries>;
-// }
-
-// export interface ContainerTyped<Entries extends Record<string, unknown> = Record<string, unknown>> extends Omit<Container, "resolve" | "resolveAsync" | "has" | "getParent" | "list">  {
-//   resolve<T, K extends keyof Entries = keyof Entries>(name: K): T extends object ? T : Entries[K];
-//   resolveAsync<T, K extends keyof Entries = keyof Entries>(name: K): Promise<T extends object ? T : Entries[K]>;
-//   has(name: keyof Entries): boolean;
-//   getParent(): ContainerTyped<Entries> | null;
-//   list(): Array<keyof Entries>;
-// }
-
