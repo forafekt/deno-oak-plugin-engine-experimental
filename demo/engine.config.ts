@@ -16,7 +16,7 @@ export default ConfigLoader.defineConfig({
     logger: { level: Deno.env.get("LOG_LEVEL") || "info", useColors: true },
     viewPaths: ["./views"],
     assetPaths: ["./public"],
-    pluginPaths: ["./plugins", "../packages/oakseed-oak-engine-plugins"],
+    pluginPaths: ["./plugins"],
     debug: DEBUG,
   },
   plugins: [

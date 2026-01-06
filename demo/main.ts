@@ -4,29 +4,27 @@
  * Demonstrates proper tenant routing setup with debugging
  */
 
-import { bootstrap, ViewEngine } from "@oakseed/oak-engine/mod.ts";
+import { oakEngine } from "@oakseed/oak-engine/mod.ts";
 
+const engine = await oakEngine();
 
-const engine = await bootstrap();
-
-
-// Get services
 const router = engine.getRouter();
-
 
 router.register({
   method: "GET",
   path: "/",
   tenant: false,
   name: "home",
-  handler: async (ctx, container) => {
-    const views = container.resolve<ViewEngine>("views");
+  handler: (kwargs) => {
+    return async (ctx, _next) => {
+    const views = kwargs.container.resolve("views");
     const html = await views.render("home", {
       title: "OakSeed Engine",
       description: "Multi-tenant plugin framework for Deno",
     });
     ctx.response.type = "text/html";
     ctx.response.body = html;
+  }
   },
 });
 
@@ -139,3 +137,4 @@ router.register({
 
 // Start the server
 await engine.listen();
+// await engine.shutdown();

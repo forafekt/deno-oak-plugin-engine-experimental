@@ -5,12 +5,12 @@
  */
 
 // import { Container, Logger, Plugin, PluginConfig } from "./types.ts";
-import type { Middleware } from "@oakseed/x/oak.ts";
 import type { Logger } from "@oakseed/logger/mod.ts";
-import { fileExists } from "@oakseed/utils/mod.ts";
 import type { Container } from "@oakseed/di/mod.ts";
-import type { RouteDefinition } from "./router.ts";
-import type { WorkerDefinition } from "./worker_manager.ts";
+import type { OakSeedRouteDefinition } from "./router.ts";
+import type { OakSeedWorkerDefinition } from "./worker_manager.ts";
+import type { AnyMiddleware } from "./middleware.ts";
+import { fileExists } from "@oakseed/utils/mod.ts";
 
 
 /**
@@ -19,47 +19,54 @@ import type { WorkerDefinition } from "./worker_manager.ts";
  * server: Server-side plugin
  * client-server: Both client and server-side plugin
  */
-export type PluginType = 'client' | 'server' | 'client-server';
+export type OakSeedPluginType = 'client' | 'server' | 'client-server';
 
 /**
  * Plugin interface - all plugins must implement this
  */
-export interface Plugin {
+export interface OakSeedEnginePlugin<TAppMiddleware extends AnyMiddleware = AnyMiddleware, TRouteMiddleware extends AnyMiddleware = AnyMiddleware, TRouteHandler extends TRouteMiddleware = TRouteMiddleware, TContainer extends Container = Container> {
   name: string;
   version: string;
-  type: PluginType;
+  type: OakSeedPluginType;
   description?: string;
   dependencies?: string[];
   
   // Lifecycle hooks
-  init?(container: Container, config: PluginConfig): Promise<void>;
-  boot?(container: Container): Promise<void>;
-  shutdown?(container: Container): Promise<void>;
+  init?(container: TContainer, config: OakSeedPluginConfig): Promise<void>;
+  boot?(container: TContainer): Promise<void>;
+  shutdown?(container: TContainer): Promise<void>;
   
   // Optional features
-  routes?: RouteDefinition[];
-  workers?: WorkerDefinition[];
-  middleware?: Middleware[];
+  routes?: OakSeedRouteDefinition<TRouteMiddleware, TRouteHandler, TContainer>[];
+  workers?: OakSeedWorkerDefinition[];
+  middleware?: TAppMiddleware[];
   viewPaths?: string[];
   assetPaths?: string[];
+
+  // TODO
+  paths?: {
+    view: string[];
+    assets: string[];
+    [key: string]: string[];
+  }
 }
 
 /**
  * Plugin configuration
  */
-export interface PluginConfig {
+export interface OakSeedPluginConfig {
   [key: string]: unknown;
 }
 
-interface LoadedPlugin {
-  plugin: Plugin;
-  config: PluginConfig;
+interface LoadedPlugin<TAppMiddleware extends AnyMiddleware = AnyMiddleware, TRouteMiddleware extends AnyMiddleware = AnyMiddleware, TRouteHandler extends TRouteMiddleware = TRouteMiddleware, TContainer extends Container = Container> {
+  plugin: OakSeedEnginePlugin<TAppMiddleware, TRouteMiddleware, TRouteHandler, TContainer>;
+  config: OakSeedPluginConfig;
   initialized: boolean;
   booted: boolean;
 }
 
-export class PluginManager {
-  private plugins = new Map<string, LoadedPlugin>();
+export class PluginManager<TAppMiddleware extends AnyMiddleware = AnyMiddleware, TRouteMiddleware extends AnyMiddleware = AnyMiddleware, TRouteHandler extends TRouteMiddleware = TRouteMiddleware, TContainer extends Container = Container> {
+  private plugins = new Map<string, LoadedPlugin<TAppMiddleware, TRouteMiddleware, TRouteHandler, TContainer>>();
   private logger: Logger;
 
   constructor(logger: Logger) {
@@ -70,8 +77,8 @@ export class PluginManager {
    * Register a plugin
    */
   async register(
-    plugin: Plugin,
-    config: PluginConfig = {}
+    plugin: OakSeedEnginePlugin<TAppMiddleware, TRouteMiddleware, TRouteHandler, TContainer>,
+    config: OakSeedPluginConfig = {}
   ): Promise<void> {
     if (this.plugins.has(plugin.name)) {
       throw new Error(`Plugin '${plugin.name}' is already registered`);
@@ -105,7 +112,7 @@ export class PluginManager {
    */
   async registerFromPath(
     path: string,
-    config: PluginConfig = {}
+    config: OakSeedPluginConfig = {}
   ): Promise<void> {
     const pluginPath = path.endsWith("/plugin.ts")
       ? path
@@ -116,7 +123,7 @@ export class PluginManager {
     }
 
     const module = await import(pluginPath);
-    const plugin: Plugin = module.default || module.plugin;
+    const plugin: OakSeedEnginePlugin<TAppMiddleware, TRouteMiddleware, TRouteHandler, TContainer> = module.default || module.plugin;
 
     if (!plugin) {
       throw new Error(`No plugin export found in ${pluginPath}`);
@@ -128,7 +135,7 @@ export class PluginManager {
   /**
    * Initialize all registered plugins
    */
-  async initialize(container: Container): Promise<void> {
+  async initialize(container: TContainer) {
     this.logger.info("Initializing plugins...");
 
     // Sort plugins by dependencies
@@ -155,7 +162,7 @@ export class PluginManager {
   /**
    * Boot all initialized plugins
    */
-  async boot(container: Container): Promise<void> {
+  async boot(container: TContainer) {
     this.logger.info("Booting plugins...");
 
     const sorted = this.topologicalSort();
@@ -185,7 +192,7 @@ export class PluginManager {
   /**
    * Shutdown all plugins
    */
-  async shutdown(container: Container): Promise<void> {
+  async shutdown(container: TContainer) {
     this.logger.info("Shutting down plugins...");
 
     // Reverse order for shutdown
@@ -213,7 +220,7 @@ export class PluginManager {
   /**
    * Get a plugin by name
    */
-  get(name: string): Plugin | null {
+  get(name: string): OakSeedEnginePlugin<TAppMiddleware, TRouteMiddleware, TRouteHandler, TContainer> | null {
     const loaded = this.plugins.get(name);
     return loaded ? loaded.plugin : null;
   }
@@ -221,7 +228,7 @@ export class PluginManager {
   /**
    * Get plugin config
    */
-  getConfig(name: string): PluginConfig | null {
+  getConfig(name: string): OakSeedPluginConfig | null {
     const loaded = this.plugins.get(name);
     return loaded ? loaded.config : null;
   }
@@ -243,7 +250,7 @@ export class PluginManager {
   /**
    * Get all plugins
    */
-  getAll(): Plugin[] {
+  getAll(): OakSeedEnginePlugin<TAppMiddleware, TRouteMiddleware, TRouteHandler, TContainer>[] {
     return Array.from(this.plugins.values()).map((l) => l.plugin);
   }
 

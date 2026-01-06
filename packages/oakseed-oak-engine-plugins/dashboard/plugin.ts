@@ -4,25 +4,19 @@
  * Complete dashboard implementation
  */
 
-import {
-  Plugin,
-  PluginConfig,
-  ViewEngine,
-  TenantManager
-} from "@oakseed/oak-engine/mod.ts";
-import { Container } from "@oakseed/di/mod.ts";
-import { EventEmitter } from "@oakseed/events";
-import { Logger } from "@oakseed/logger";
 
-export const DashboardPlugin: Plugin = {
+import { defineOakPlugin } from "@oakseed/oak-engine";
+import type { Container } from "@oakseed/di/mod.ts";
+
+export const DashboardPlugin = defineOakPlugin({
   name: "dashboard",
   version: "1.0.0",
   description: "Dashboard plugin",
   type: 'client-server',
 
-  async init(container: Container, config: PluginConfig): Promise<void> {
-    const logger = container.resolve<Logger>("logger");
-    const events = container.resolve<EventEmitter>("events");
+  async init(container, config) {
+    const logger = container.resolve("logger");
+    const events = container.resolve("events");
 
     logger.info("Initializing dashboard plugin");
 
@@ -51,8 +45,8 @@ export const DashboardPlugin: Plugin = {
       path: "/dashboard",
       tenant: false,
       name: "dashboard",
-      handler: async (ctx, container) => {
-        const tenantManager = container.resolve<TenantManager>("tenantManager");
+      handler: (kwargs) => async (ctx) => {
+        const tenantManager = kwargs.container.resolve("tenantManager");
         const tenant = await tenantManager.resolve(ctx);
         if (!tenant) {
           ctx.response.status = 404;
@@ -67,18 +61,18 @@ export const DashboardPlugin: Plugin = {
       path: "/tenant/:tenantId/dashboard",
       tenant: true,
       name: "tenant-dashboard",
-      handler: async (ctx, container) => {
-        const tenant = ctx.state.tenant;
-        const views = container.resolve<ViewEngine>("views");
+      handler: (kwargs) => async (ctx) => {
+        const tenant = ctx.state.tenant!;
+        const views = kwargs.container.resolve("views");
 
         const html = await views.render(
           'dashboard',
           {
             tenant,
-            title: `${tenant.name} Dashboard`,
+            title: `${tenant!.name} Dashboard`,
             assets: {
-                'dashboard.css': "css/plugins/dashboard.css", // E.g ./.out/css/plugins/dashboard.css
-                'dashboard.js': "js/plugins/dashboard/scripts/dashboard.js", // E.g ./.out/js/plugins/dashboard/scripts/dashboard.js
+                'dashboard.css': "packages/oakseed-oak-engine-plugins/dashboard/sass/dashboard.sass", // E.g ./.out/css/plugins/dashboard.css
+                'dashboard.js': "packages/oakseed-oak-engine-plugins/dashboard/scripts/dashboard.ts", // E.g ./.out/js/plugins/dashboard/scripts/dashboard.js
                 // 'dashboard.css': "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css", // TODO: Remove this. This is just for testing remote assets
                 // 'dashboard.js': "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js", // TODO: Remove this. This is just for testing remote assets
             },
@@ -97,8 +91,8 @@ export const DashboardPlugin: Plugin = {
 
   workers: [],
 
-  viewPaths: ["../packages/oakseed-plugins/dashboard/views"] // TODO: Fix this -> This should be relative to the plugin
-};
+  viewPaths: ["../packages/oakseed-oak-engine-plugins/dashboard/views"] // TODO: Fix this -> This should be relative to the plugin
+});
 
 /**
  * Dashboard Service
@@ -115,7 +109,7 @@ class DashboardService {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    const logger = this.container.resolve<Logger>("logger");
+    const logger = this.container.resolve("logger");
     logger.debug("Initializing dashboard service");
 
     this.initialized = true;

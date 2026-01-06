@@ -6,21 +6,19 @@
 
 import { send } from "@oakseed/x/oak.ts";
 import { join } from "@oakseed/x/std/path.ts";
-  import {
-    Plugin,
-    PluginConfig,
-  } from "@oakseed/oak-engine/mod.ts";
+
   import { Container } from "@oakseed/di/mod.ts";
   import { EventEmitter } from "@oakseed/events";
   import { Logger } from "@oakseed/logger";
-
-export const FileSystemRouterPlugin: Plugin = {
+  import { defineOakPlugin } from "@oakseed/oak-engine";
+ 
+export const FileSystemRouterPlugin = defineOakPlugin({
   name: "fileSystemRouter",
   version: "1.0.0",
   description: "FileSystemRouter plugin",
   type: 'server',
 
-  async init(container: Container, config: PluginConfig): Promise<void> {
+  async init(container, config): Promise<void> {
     const logger = container.resolve<Logger>("logger");
     const events = container.resolve<EventEmitter>("events");
 
@@ -49,7 +47,8 @@ export const FileSystemRouterPlugin: Plugin = {
     method: 'GET',
     path: "/@fs/(.*)",
     tenant: false,
-    async handler(ctx, container) {
+    handler({ container }) {
+      return async (ctx) => {
       const fileSystemRouter = container.resolve<FileSystemRouterService>("fileSystemRouter");
       const filePath = ctx.params[0];
       if (!filePath) {
@@ -63,12 +62,13 @@ export const FileSystemRouterPlugin: Plugin = {
       }
 
       // TODO: Add proper types
-      const config = container.resolve<Record<string, any>>("config");
+      const config = container.resolve("config");
       const root = join(Deno.cwd(), config?.outputDir || '.out')
 
       // Asynchronously fulfill a response with a file from the local file system.
       // Requires Deno read permission for the root directory.
       await send(ctx, filePath, { root });
+    }
     },
     middleware: [
       // proxy to another host server
@@ -83,7 +83,7 @@ export const FileSystemRouterPlugin: Plugin = {
     ]
   }],
   workers: [],
-};
+});
 
 /**
  * FileSystemRouter Service

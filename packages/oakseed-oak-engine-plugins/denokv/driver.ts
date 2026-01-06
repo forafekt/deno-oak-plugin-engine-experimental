@@ -4,7 +4,9 @@
  * Can be used as both database and cache
  */
 
-import type { DatabaseDriver, CacheDriver, Logger } from "@oakseed/engine/mod.ts";
+import type { CacheDriver, DatabaseDriver } from "@oakseed/types";
+import type { Logger } from "@oakseed/logger";
+
 
 
 

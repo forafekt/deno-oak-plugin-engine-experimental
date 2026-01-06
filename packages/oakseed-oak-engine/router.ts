@@ -1,41 +1,36 @@
+// deno-lint-ignore-file no-explicit-any
 // core/router.ts
 /**
  * Multi-Tenant Router
  * Handles route registration and tenant-aware routing with Oak integration
  */
-let process;
 
 import type {
-  Middleware,
   RouterContext,
   RouterOptions,
-  State as OakContextState,
   RouteParams,
+  RouterMiddleware,
 } from "@oakseed/x/oak.ts";
 import { Router } from "@oakseed/x/oak.ts";
-import type { Container } from "@oakseed/di/mod.ts";
 import type { Logger } from "@oakseed/logger/mod.ts";
-import type { Tenant, TenantManager } from "./tenant_manager.ts";
+import type { OakSeedRouteDefinition, OakSeedRouterContract } from "@oakseed/engine-core/router.ts";
+import { defineMiddlewareFactory } from "@oakseed/engine-core/middleware.ts";
+import type { Tenant, TenantManager } from "@oakseed/engine-core/tenant_manager.ts";
+import type { OakEngineContainer } from "./kernel.ts";
 
-export interface RouteDefinition {
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
-  path: string;
-  handler: <R extends string, P extends RouteParams<R> = RouteParams<R>, S extends OakContextState = Record<string, any>>(ctx: RouterContext<R, P, S>, container: Container) => Promise<void> | void;
-  middleware?: Middleware[];
-  tenant?: boolean; // If true, route requires tenant resolution
-  name?: string; // Optional route name for debugging
-  requiresAuth?: boolean; // If true, route requires authentication
-  requiresPermissions?: boolean; // If true, route requires permissions
-  requiresTenant?: boolean; // If true, route requires tenant
-  type?: "api" | "view" | "static";
+export type OakEngineRouterState<K extends PropertyKey = PropertyKey> =  { tenant: Tenant | null; container: OakEngineContainer } & Record<K, any>;
+
+export interface OakEngineRouterMiddleware<R extends string = string, P extends RouteParams<R> = RouteParams<R>, S extends OakEngineRouterState = OakEngineRouterState> extends RouterMiddleware<R, P, S> {
 }
 
-export class OakSeedRouter {
-  private router: Router;
-  private logger: Logger;
-  private tenantManager: TenantManager;
-  private globalContainer: Container;
-  private routes: RouteDefinition[] = [];
+
+
+export class OakRouter<R extends string = string, P extends RouteParams<R> = RouteParams<R>, S extends OakEngineRouterState = OakEngineRouterState> implements OakSeedRouterContract<Router, OakEngineRouterMiddleware<R, P, S>> {
+  router: Router;
+  globalContainer: OakEngineContainer;
+  tenantManager: TenantManager;
+  logger: Logger;
+  routes: OakSeedRouteDefinition<OakEngineRouterMiddleware<R, P, S>>[] = [];
 
   constructor(
     opts: RouterOptions = {
@@ -45,7 +40,7 @@ export class OakSeedRouter {
       sensitive: undefined,
       strict: undefined,
     },
-    globalContainer: Container,
+    globalContainer: OakEngineContainer,
     tenantManager: TenantManager,
     logger: Logger
   ) {
@@ -68,7 +63,7 @@ export class OakSeedRouter {
   /**
    * Register a route
    */
-  register(route: RouteDefinition): void {
+  register(route: OakSeedRouteDefinition<OakEngineRouterMiddleware<R, P, S>, OakEngineRouterMiddleware<R, P, S>, OakEngineContainer>): void {
     this.routes.push(route);
 
     const routeName = route.name || `${route.method} ${route.path}`;
@@ -76,9 +71,10 @@ export class OakSeedRouter {
     this.logger.debug(`Registering route: ${routeName}`, {
       tenant: route.tenant || false,
       path: route.path,
+      containerType: this.globalContainer.constructor.name,
     });
 
-    const handler = async (ctx: RouterContext<any>) => {
+    const handler = async (ctx: RouterContext<R, P, S>, next: () => Promise<unknown>) => {
       let container = this.globalContainer;
       let tenant: Tenant | null = null;
 
@@ -131,7 +127,7 @@ export class OakSeedRouter {
           ctx.response.headers.set("x-tenant-id", tenant.id);
 
           // store tenant cookie
-          ctx.cookies.set("tenant", tenant);
+          ctx.cookies.set("tenant", tenant.id);
 
           // store tenant in sessions
           if (ctx.state.session) {
@@ -148,7 +144,9 @@ export class OakSeedRouter {
         ctx.state.container = container;
 
         // Execute handler
-        return route.handler(ctx, container);
+        const factory = defineMiddlewareFactory<OakEngineRouterMiddleware<R, P, S>>(route.handler);
+        const middleware = factory({ container, tenant });
+        return middleware(ctx, next);
       } catch (error) {
         this.logger.error(`Route handler error: ${route.path}`, {
           error: error instanceof Error ? error.message : String(error),
@@ -158,9 +156,7 @@ export class OakSeedRouter {
         ctx.response.status = 500;
         ctx.response.body = {
           error: "Internal server error",
-          message:
-            (process as any).env.NODE_ENV === "development" ||
-            Deno?.env?.get("DENO_ENV") === "development"
+          message: Deno.env.get("DENO_ENV") === "development"
               ? error instanceof Error
                 ? error.message
                 : String(error)
@@ -170,16 +166,21 @@ export class OakSeedRouter {
     };
 
     // Apply route middleware if any
-    const middlewares: Middleware[] = route.middleware || [];
+    // TODO also apply tenant awareness in the middlewares
+    const middlewares = (route.middleware || []).map((mw) => {
+      const factory = defineMiddlewareFactory(mw);
+      const middleware = factory({ container: this.globalContainer, tenant: null });
+      return middleware;
+    });
 
-    this.router.add(route.method, route.path, handler, ...middlewares);
+    this.router.add<R, P, S>(route.method, route.path as R, handler, ...middlewares);
     this.logger.debug(`Route registered successfully: ${routeName}`);
   }
 
   /**
    * Register multiple routes
    */
-  registerRoutes(routes: RouteDefinition[]): void {
+  registerRoutes(routes: OakSeedRouteDefinition<OakEngineRouterMiddleware<R, P, S>>[]): void {
     this.logger.info(`Registering ${routes.length} routes`);
     for (const route of routes) {
       this.register(route);
@@ -189,28 +190,28 @@ export class OakSeedRouter {
   /**
    * Get Oak router
    */
-  getRouter(): Router {
+  getRouter() {
     return this.router;
   }
 
   /**
    * Get all registered routes
    */
-  getRoutes(): RouteDefinition[] {
+  getRoutes(): OakSeedRouteDefinition<OakEngineRouterMiddleware<R, P, S>>[] {
     return [...this.routes];
   }
 
   /**
    * Get routes by tenant requirement
    */
-  getTenantRoutes(): RouteDefinition[] {
+  getTenantRoutes(): OakSeedRouteDefinition<OakEngineRouterMiddleware<R, P, S>>[] {
     return this.routes.filter((r) => r.tenant);
   }
 
   /**
    * Get global routes (non-tenant)
    */
-  getGlobalRoutes(): RouteDefinition[] {
+  getGlobalRoutes(): OakSeedRouteDefinition<OakEngineRouterMiddleware<R, P, S>>[] {
     return this.routes.filter((r) => !r.tenant);
   }
 

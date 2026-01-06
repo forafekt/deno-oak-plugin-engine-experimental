@@ -12,7 +12,7 @@ import { EventEmitter } from "@oakseed/events/mod.ts";
  * Worker definition
  */
 
-export interface WorkerDefinition {
+export interface OakSeedWorkerDefinition {
   name: string;
   handler: WorkerHandler;
   schedule?: string; // Cron expression for scheduled workers
@@ -40,7 +40,7 @@ export interface WorkerResult {
 
 interface RegisteredWorker {
   plugin: string;
-  definition: WorkerDefinition;
+  definition: OakSeedWorkerDefinition;
   runCount: number;
   lastRun?: Date;
   runningInstances: number;
@@ -106,7 +106,7 @@ export class WorkerManager {
    */
   register(
     plugin: string,
-    definition: WorkerDefinition
+    definition: OakSeedWorkerDefinition
   ): void {
     const key = `${plugin}.${definition.name}`;
     
@@ -135,7 +135,7 @@ export class WorkerManager {
   /**
    * Register multiple workers from a plugin
    */
-  registerWorkers(plugin: string, workers: WorkerDefinition[]): void {
+  registerWorkers(plugin: string, workers: OakSeedWorkerDefinition[]): void {
     for (const worker of workers) {
       this.register(plugin, worker);
     }
